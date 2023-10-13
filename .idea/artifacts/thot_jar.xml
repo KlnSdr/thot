@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" build-on-make="true" name="thot:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/thot_jar</output-path>
+    <root id="archive" name="thot.jar">
+      <element id="module-output" name="thot" />
+    </root>
+  </artifact>
+</component>
