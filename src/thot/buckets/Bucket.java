@@ -3,6 +3,7 @@ package thot.buckets;
 import thot.util.logging.Logger;
 
 import java.io.*;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static thot.Main.basePath;
@@ -27,6 +28,11 @@ public class Bucket implements Serializable {
     public Serializable read(String key) {
         LOGGER.info("Reading from bucket '" + this.name + "' with key '" + key + "'");
         return this.bucket.get(key);
+    }
+
+    public Serializable[] readPattern(String pattern) {
+        LOGGER.info("Reading from bucket '" + this.name + "' with pattern '" + pattern + "'");
+        return this.bucket.entrySet().stream().filter(entry -> entry.getKey().matches(pattern)).map(Map.Entry::getValue).toArray(Serializable[]::new);
     }
 
     public void delete(String key) {

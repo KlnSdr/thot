@@ -1,11 +1,12 @@
 package thot.server.handler.read;
 
+import thot.buckets.Bucket;
+import thot.buckets.service.BucketService;
 import thot.common.command.Command;
+import thot.common.command.KeyType;
 import thot.common.response.Response;
 import thot.common.response.ResponseType;
 import thot.server.handler.Handler;
-import thot.buckets.Bucket;
-import thot.buckets.service.BucketService;
 
 import java.io.Serializable;
 
@@ -14,6 +15,7 @@ public class ReadHandler implements Handler {
     public Response handle(Command command) {
         String bucketName = command.getBucketName();
         ReadPayload payload = (ReadPayload) command.getPayload();
+        KeyType keyType = payload.getKeyType();
 
         BucketService bucketService = BucketService.getInstance();
 
@@ -22,12 +24,23 @@ public class ReadHandler implements Handler {
             return bucketNotFoundResponse(bucketName);
         }
 
-        Serializable value = bucket.read(payload.getKey());
-        if (value == null) {
+        if (keyType == KeyType.ABSOLUTE) {
+            Serializable value = bucket.read(payload.getKey());
+            if (value == null) {
+                return keyNotFoundResponse(payload.getKey(), bucketName);
+            }
+
+            return successResponse(value);
+        } else if (keyType == KeyType.REGEX) {
+            Serializable[] values = bucket.readPattern(payload.getKey());
+            if (values == null) {
+                return keyNotFoundResponse(payload.getKey(), bucketName);
+            }
+
+            return successResponse(values);
+        } else {
             return keyNotFoundResponse(payload.getKey(), bucketName);
         }
-
-        return successResponse(value);
     }
 
     private Response bucketNotFoundResponse(String bucketName) {
@@ -45,6 +58,13 @@ public class ReadHandler implements Handler {
     }
 
     private Response successResponse(Serializable value) {
+        Response response = new Response();
+        response.setResponseType(ResponseType.SUCCESS);
+        response.setValue(value);
+        return response;
+    }
+
+    private Response successResponse(Serializable[] value) {
         Response response = new Response();
         response.setResponseType(ResponseType.SUCCESS);
         response.setValue(value);
