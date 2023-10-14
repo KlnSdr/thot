@@ -4,8 +4,8 @@ import thot.common.command.Command;
 import thot.common.response.Response;
 import thot.common.response.ResponseType;
 import thot.server.handler.Handler;
-import thot.tables.Table;
-import thot.tables.service.TableService;
+import thot.buckets.Bucket;
+import thot.buckets.service.BucketService;
 
 public class WriteHandler implements Handler {
     @Override
@@ -13,14 +13,14 @@ public class WriteHandler implements Handler {
         String tableName = command.getTable();
         WritePayload payload = (WritePayload) command.getPayload();
 
-        TableService tableService = TableService.getInstance();
+        BucketService bucketService = BucketService.getInstance();
 
-        Table table = tableService.find(tableName);
-        if (table == null) {
-            table = tableService.create(tableName);
+        Bucket bucket = bucketService.find(tableName);
+        if (bucket == null) {
+            bucket = bucketService.create(tableName);
         }
 
-        table.write(payload.getKey(), payload.getValue());
+        bucket.write(payload.getKey(), payload.getValue());
 
         Response response = new Response();
         response.setResponseType(ResponseType.SUCCESS);

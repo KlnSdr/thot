@@ -1,34 +1,34 @@
-package thot.tables.service;
+package thot.buckets.service;
 
-import thot.tables.Table;
+import thot.buckets.Bucket;
 
 import java.util.concurrent.ConcurrentHashMap;
 
-public class TableService {
-    private static TableService instance;
-    private final ConcurrentHashMap<String, Table> tables;
+public class BucketService {
+    private static BucketService instance;
+    private final ConcurrentHashMap<String, Bucket> tables;
 
-    private TableService() {
+    private BucketService() {
         this.tables = new ConcurrentHashMap<>();
         loadTablesFromDisk();
     }
 
-    public static TableService getInstance() {
+    public static BucketService getInstance() {
         if (instance == null) {
-            instance = new TableService();
+            instance = new BucketService();
         }
         return instance;
     }
 
-    public Table find(String name) {
+    public Bucket find(String name) {
         return this.tables.get(name);
     }
 
-    public Table create(String name) {
+    public Bucket create(String name) {
         if (this.tables.containsKey(name)) {
             throw new IllegalArgumentException("Table already exists");
         }
-        this.tables.put(name, new Table());
+        this.tables.put(name, new Bucket());
         return find(name);
     }
 

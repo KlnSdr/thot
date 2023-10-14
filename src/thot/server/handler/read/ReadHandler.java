@@ -4,8 +4,8 @@ import thot.common.command.Command;
 import thot.common.response.Response;
 import thot.common.response.ResponseType;
 import thot.server.handler.Handler;
-import thot.tables.Table;
-import thot.tables.service.TableService;
+import thot.buckets.Bucket;
+import thot.buckets.service.BucketService;
 
 import java.io.Serializable;
 
@@ -15,14 +15,14 @@ public class ReadHandler implements Handler {
         String tableName = command.getTable();
         ReadPayload payload = (ReadPayload) command.getPayload();
 
-        TableService tableService = TableService.getInstance();
+        BucketService bucketService = BucketService.getInstance();
 
-        Table table = tableService.find(tableName);
-        if (table == null) {
+        Bucket bucket = bucketService.find(tableName);
+        if (bucket == null) {
             return tableNotFoundResponse(tableName);
         }
 
-        Serializable value = table.read(payload.getKey());
+        Serializable value = bucket.read(payload.getKey());
         if (value == null) {
             return keyNotFoundResponse(payload.getKey(), tableName);
         }

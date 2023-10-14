@@ -1,12 +1,12 @@
-package thot.tables;
+package thot.buckets;
 
 import java.io.Serializable;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class Table {
+public class Bucket {
     private final ConcurrentHashMap<String, Serializable> table;
 
-    public Table() {
+    public Bucket() {
         this.table = new ConcurrentHashMap<>();
     }
 
