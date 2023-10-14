@@ -76,7 +76,9 @@ public class Connector {
             Command command = new Command(CommandType.READ, bucketName, new ReadPayload(pattern, KeyType.REGEX));
             Response response = sendRequest(command);
             Object[] responseArray = (Object[]) response.getValue();
-            if (comonentTypeClass.isInstance(responseArray[0])) {
+            if (responseArray.length == 0) {
+                return (T[]) Array.newInstance(comonentTypeClass, 0);
+            } else if (comonentTypeClass.isInstance(responseArray[0])) {
                 T[] arr = (T[]) Array.newInstance(comonentTypeClass, responseArray.length);
                 for (int i = 0; i < responseArray.length; i++) {
                     arr[i] = comonentTypeClass.cast(responseArray[i]);
