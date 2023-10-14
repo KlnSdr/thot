@@ -4,6 +4,7 @@ import thot.common.command.Command;
 import thot.common.command.CommandType;
 import thot.common.response.Response;
 import thot.common.response.ResponseType;
+import thot.server.handler.delete.DeletePayload;
 import thot.server.handler.read.ReadPayload;
 import thot.server.handler.write.WritePayload;
 import thot.util.logging.Logger;
@@ -19,8 +20,16 @@ public class Connector {
 
     public static void main(String[] args) {
         String val1 = read("temperatureValues", "2023-01-01", String.class);
-        boolean disWrite = write("temperatureValues", "2023-01-01", "25.0");
+        LOGGER.info("read empty: " + (val1 == null));
+        boolean didWrite = write("temperatureValues", "2023-01-01", "25.0");
+        LOGGER.info("write: " + didWrite);
         String val2 = read("temperatureValues", "2023-01-01", String.class);
+        LOGGER.info("read: " + val2);
+        boolean didDelete = delete("temperatureValues", "2023-01-01");
+        LOGGER.info("delete: " + didDelete);
+        String val3 = read("temperatureValues", "2023-01-01", String.class);
+        LOGGER.info("read empty: " + (val3 == null));
+
     }
 
     private static Response sendRequest(Command command) throws IOException, ClassNotFoundException {
@@ -42,9 +51,9 @@ public class Connector {
         return response;
     }
 
-    public static boolean write(String table, String key, Serializable value) {
+    public static boolean write(String bucketName, String key, Serializable value) {
         try {
-            Command command = new Command(CommandType.WRITE, table, new WritePayload(key, value));
+            Command command = new Command(CommandType.WRITE, bucketName, new WritePayload(key, value));
             Response response = sendRequest(command);
 
             return response.getResponseType() == ResponseType.SUCCESS;
@@ -54,9 +63,9 @@ public class Connector {
         }
     }
 
-    public static <T> T read(String table, String key, Class<? extends T> typeClass) {
+    public static <T> T read(String bucketName, String key, Class<? extends T> typeClass) {
         try {
-            Command command = new Command(CommandType.READ, table, new ReadPayload(key));
+            Command command = new Command(CommandType.READ, bucketName, new ReadPayload(key));
             Response response = sendRequest(command);
             if (typeClass.isInstance(response.getValue())) {
                 return typeClass.cast(response.getValue());
@@ -66,6 +75,18 @@ public class Connector {
         } catch (IOException | ClassNotFoundException e) {
             LOGGER.trace(e);
             return null;
+        }
+    }
+
+    public static boolean delete(String bucketName, String key) {
+        try {
+            Command command = new Command(CommandType.DELETE, bucketName, new DeletePayload(key));
+            Response response = sendRequest(command);
+
+            return response.getResponseType() == ResponseType.SUCCESS;
+        } catch (IOException | ClassNotFoundException e) {
+            LOGGER.trace(e);
+            return false;
         }
     }
 }

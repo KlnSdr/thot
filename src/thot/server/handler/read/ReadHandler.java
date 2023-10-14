@@ -12,35 +12,35 @@ import java.io.Serializable;
 public class ReadHandler implements Handler {
     @Override
     public Response handle(Command command) {
-        String tableName = command.getTable();
+        String bucketName = command.getBucketName();
         ReadPayload payload = (ReadPayload) command.getPayload();
 
         BucketService bucketService = BucketService.getInstance();
 
-        Bucket bucket = bucketService.find(tableName);
+        Bucket bucket = bucketService.find(bucketName);
         if (bucket == null) {
-            return tableNotFoundResponse(tableName);
+            return bucketNotFoundResponse(bucketName);
         }
 
         Serializable value = bucket.read(payload.getKey());
         if (value == null) {
-            return keyNotFoundResponse(payload.getKey(), tableName);
+            return keyNotFoundResponse(payload.getKey(), bucketName);
         }
 
         return successResponse(value);
     }
 
-    private Response tableNotFoundResponse(String tableName) {
+    private Response bucketNotFoundResponse(String bucketName) {
         Response response = new Response();
         response.setResponseType(ResponseType.ERROR);
-        response.setError("Table '" + tableName + "' not found");
+        response.setError("bucket '" + bucketName + "' not found");
         return response;
     }
 
-    private Response keyNotFoundResponse(String key, String tableName) {
+    private Response keyNotFoundResponse(String key, String bucketName) {
         Response response = new Response();
         response.setResponseType(ResponseType.ERROR);
-        response.setError("Key '" + key + "' in table '" + tableName + "' not found");
+        response.setError("Key '" + key + "' in bucket '" + bucketName + "' not found");
         return response;
     }
 

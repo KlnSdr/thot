@@ -6,11 +6,11 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class BucketService {
     private static BucketService instance;
-    private final ConcurrentHashMap<String, Bucket> tables;
+    private final ConcurrentHashMap<String, Bucket> buckets;
 
     private BucketService() {
-        this.tables = new ConcurrentHashMap<>();
-        loadTablesFromDisk();
+        this.buckets = new ConcurrentHashMap<>();
+        loadBucketsFromDisk();
     }
 
     public static BucketService getInstance() {
@@ -21,25 +21,25 @@ public class BucketService {
     }
 
     public Bucket find(String name) {
-        return this.tables.get(name);
+        return this.buckets.get(name);
     }
 
     public Bucket create(String name) {
-        if (this.tables.containsKey(name)) {
-            throw new IllegalArgumentException("Table already exists");
+        if (this.buckets.containsKey(name)) {
+            throw new IllegalArgumentException("Bucket already exists");
         }
-        this.tables.put(name, new Bucket());
+        this.buckets.put(name, new Bucket());
         return find(name);
     }
 
     public void delete(String name) {
-        if (!this.tables.containsKey(name)) {
-            throw new IllegalArgumentException("Table does not exist");
+        if (!this.buckets.containsKey(name)) {
+            throw new IllegalArgumentException("Bucket does not exist");
         }
-        this.tables.remove(name);
+        this.buckets.remove(name);
     }
 
-    private void loadTablesFromDisk() {
+    private void loadBucketsFromDisk() {
         // todo implement
     }
 }

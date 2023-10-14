@@ -4,26 +4,26 @@ import java.io.Serializable;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Bucket {
-    private final ConcurrentHashMap<String, Serializable> table;
+    private final ConcurrentHashMap<String, Serializable> bucket;
 
     public Bucket() {
-        this.table = new ConcurrentHashMap<>();
+        this.bucket = new ConcurrentHashMap<>();
     }
 
     public void write(String key, Serializable value) {
-        this.table.put(key, value);
+        this.bucket.put(key, value);
     }
 
     public Serializable read(String key) {
-        return this.table.get(key);
+        return this.bucket.get(key);
     }
 
     public void delete(String key) {
-        this.table.remove(key);
+        this.bucket.remove(key);
     }
 
     public boolean contains(String key) {
-        return this.table.containsKey(key);
+        return this.bucket.containsKey(key);
     }
 
     private void saveToDisk() {

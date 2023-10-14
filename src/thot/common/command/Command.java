@@ -4,12 +4,12 @@ import java.io.Serializable;
 
 public class Command implements Serializable {
     private final CommandType commandType;
-    private final String table;
+    private final String bucketName;
     private final Serializable payload;
 
-    public Command(CommandType commandType, String table, Serializable payload) {
+    public Command(CommandType commandType, String bucketName, Serializable payload) {
         this.commandType = commandType;
-        this.table = table;
+        this.bucketName = bucketName;
         this.payload = payload;
     }
 
@@ -17,8 +17,8 @@ public class Command implements Serializable {
         return commandType;
     }
 
-    public String getTable() {
-        return table;
+    public String getBucketName() {
+        return bucketName;
     }
 
     public Object getPayload() {
