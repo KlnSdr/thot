@@ -1,5 +1,6 @@
 package thot.server;
 
+import thot.buckets.service.BucketService;
 import thot.common.command.Command;
 import thot.common.command.CommandType;
 import thot.common.response.Response;
@@ -50,6 +51,7 @@ public class Server {
         System.out.println();
 
         setLogLevel("DEBUG");
+        BucketService.getInstance();
         new Server(PORT, THREADS);
     }
 

@@ -2,7 +2,12 @@ package thot.buckets.service;
 
 import thot.buckets.Bucket;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+
+import static thot.Main.basePath;
 
 public class BucketService {
     private static BucketService instance;
@@ -28,7 +33,7 @@ public class BucketService {
         if (this.buckets.containsKey(name)) {
             throw new IllegalArgumentException("Bucket already exists");
         }
-        this.buckets.put(name, new Bucket());
+        this.buckets.put(name, new Bucket(name));
         return find(name);
     }
 
@@ -40,6 +45,25 @@ public class BucketService {
     }
 
     private void loadBucketsFromDisk() {
-        // todo implement
+        String[] buckets = getBuckets();
+        for (String bucketName : buckets) {
+            this.buckets.put(bucketName, new Bucket(bucketName));
+        }
+    }
+
+    private String[] getBuckets() {
+        File folder = new File(basePath);
+        ArrayList<String> buckets = new ArrayList<>();
+
+        if (!folder.exists() || !folder.isDirectory()) {
+            return new String[0];
+        }
+
+        for (File file : Objects.requireNonNull(folder.listFiles())) {
+            if (file.isFile() && file.getName().endsWith(".bucket")) {
+                buckets.add(file.getName().replace(".bucket", ""));
+            }
+        }
+        return buckets.toArray(new String[0]);
     }
 }

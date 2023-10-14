@@ -21,14 +21,15 @@ public class Connector {
     public static void main(String[] args) {
         String val1 = read("temperatureValues", "2023-01-01", String.class);
         LOGGER.info("read empty: " + (val1 == null));
+        LOGGER.info("read: " + val1);
         boolean didWrite = write("temperatureValues", "2023-01-01", "25.0");
         LOGGER.info("write: " + didWrite);
         String val2 = read("temperatureValues", "2023-01-01", String.class);
         LOGGER.info("read: " + val2);
-        boolean didDelete = delete("temperatureValues", "2023-01-01");
-        LOGGER.info("delete: " + didDelete);
-        String val3 = read("temperatureValues", "2023-01-01", String.class);
-        LOGGER.info("read empty: " + (val3 == null));
+//        boolean didDelete = delete("temperatureValues", "2023-01-01");
+//        LOGGER.info("delete: " + didDelete);
+//        String val3 = read("temperatureValues", "2023-01-01", String.class);
+//        LOGGER.info("read empty: " + (val3 == null));
 
     }
 
