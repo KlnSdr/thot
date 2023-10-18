@@ -1,6 +1,6 @@
 package thot.buckets;
 
-import thot.util.logging.Logger;
+import dobby.util.logging.Logger;
 
 import java.io.*;
 import java.util.Map;

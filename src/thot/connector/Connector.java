@@ -1,5 +1,6 @@
 package thot.connector;
 
+import dobby.util.logging.Logger;
 import thot.common.command.Command;
 import thot.common.command.CommandType;
 import thot.common.command.KeyType;
@@ -8,7 +9,6 @@ import thot.common.response.ResponseType;
 import thot.server.handler.delete.DeletePayload;
 import thot.server.handler.read.ReadPayload;
 import thot.server.handler.write.WritePayload;
-import thot.util.logging.Logger;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
