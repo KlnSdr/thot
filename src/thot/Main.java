@@ -19,6 +19,5 @@ public class Main implements DobbyEntryPoint {
 
     @Override
     public void postStart() {
-        SchedulerService.getInstance().stopAll();
     }
 }

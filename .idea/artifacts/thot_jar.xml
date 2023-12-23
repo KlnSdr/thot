@@ -3,7 +3,7 @@
     <output-path>$PROJECT_DIR$/out/artifacts/thot_jar</output-path>
     <root id="archive" name="thot.jar">
       <element id="module-output" name="thot" />
-      <element id="extracted-dir" path="$USER_HOME$/dev/customJars/dobby/v0.1.0/dobby.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/dev/customJars/dobby/v0.1.1/dobby.jar" path-in-jar="/" />
     </root>
   </artifact>
 </component>
