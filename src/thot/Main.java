@@ -2,6 +2,7 @@ package thot;
 
 import dobby.Dobby;
 import dobby.DobbyEntryPoint;
+import dobby.task.SchedulerService;
 import thot.buckets.service.BucketService;
 
 public class Main implements DobbyEntryPoint {
@@ -18,6 +19,6 @@ public class Main implements DobbyEntryPoint {
 
     @Override
     public void postStart() {
-
+        SchedulerService.getInstance().stopAll();
     }
 }
