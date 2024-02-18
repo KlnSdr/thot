@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static thot.Main.basePath;
+import static thot.Thot.getBasePath;
 
 public class BucketService {
     private static BucketService instance;
@@ -52,7 +52,7 @@ public class BucketService {
     }
 
     private String[] getBuckets() {
-        File folder = new File(basePath);
+        File folder = new File(getBasePath());
         ArrayList<String> buckets = new ArrayList<>();
 
         if (!folder.exists() || !folder.isDirectory()) {

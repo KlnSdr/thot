@@ -6,7 +6,7 @@ import java.io.*;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static thot.Main.basePath;
+import static thot.Thot.getBasePath;
 
 public class Bucket implements Serializable {
     private static final Logger LOGGER = new Logger(Bucket.class);
@@ -50,7 +50,7 @@ public class Bucket implements Serializable {
     private void saveToDisk() {
         LOGGER.info("Saving bucket '" + this.name + "' to disk");
         try {
-            FileOutputStream fos = new FileOutputStream(basePath + this.name + ".bucket");
+            FileOutputStream fos = new FileOutputStream(getBasePath() + this.name + ".bucket");
             ObjectOutputStream oos = new ObjectOutputStream(fos);
             oos.writeObject(this.bucket);
             oos.close();
@@ -63,7 +63,7 @@ public class Bucket implements Serializable {
 
     private void loadFromDisk() {
         LOGGER.info("Loading bucket '" + this.name + "' from disk");
-        File file = new File(basePath + this.name + ".bucket");
+        File file = new File(getBasePath() + this.name + ".bucket");
         if (!file.exists() || !file.isFile()) {
             return;
         }
