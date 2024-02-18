@@ -3,13 +3,16 @@ package thot;
 import dobby.Dobby;
 import dobby.DobbyEntryPoint;
 import dobby.util.logging.Logger;
+import thot.buckets.BucketDiscoverer;
 import thot.buckets.service.BucketService;
 
+import java.io.File;
 import java.net.URISyntaxException;
 
 public class Thot implements DobbyEntryPoint {
     private static final Logger LOGGER = new Logger(Thot.class);
     private static String basePath = "buckets/";
+
     public static String getBasePath() {
         return basePath;
     }
@@ -22,6 +25,8 @@ public class Thot implements DobbyEntryPoint {
     public void preStart() {
         prependJarPathToBasePath();
         BucketService.getInstance();
+        createBucketDirectoryIfNeeded();
+        BucketDiscoverer.discoverRoutes("");
     }
 
     private void prependJarPathToBasePath() {
@@ -33,6 +38,19 @@ public class Thot implements DobbyEntryPoint {
             LOGGER.error("Failed to get jar path");
             LOGGER.trace(e);
             System.exit(1);
+        }
+    }
+
+    private void createBucketDirectoryIfNeeded() {
+        final File file = new java.io.File(basePath);
+        if (!file.exists()) {
+            final boolean didCreate = file.mkdir();
+            if (!didCreate) {
+                LOGGER.error("Failed to create bucket directory");
+                System.exit(1);
+            } else {
+                LOGGER.info("Created bucket directory");
+            }
         }
     }
 
