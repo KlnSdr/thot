@@ -2,15 +2,11 @@ package poc;
 
 import dobby.util.Json;
 import janus.Janus;
-import poc.TestClass;
-import poc.TestClass2;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
-import java.util.List;
 
 public class Main {
-    public static void main(String[] args) throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
+    public static void main(String[] args) {
         final TestClass test = new TestClass();
         final TestClass2 test2 = new TestClass2();
 
@@ -32,6 +28,7 @@ public class Main {
 
         final TestClass parsed = Janus.parse(testJson, TestClass.class);
 
+        assert parsed != null;
         System.out.println(parsed.toJson().toString());
     }
 }
