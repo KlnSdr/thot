@@ -14,6 +14,10 @@ public class Janus {
     private static final Logger LOGGER = new Logger(Janus.class);
 
     public static <T extends DataClass> T parse(Json json, Class<T> clazz) {
+        if (json == null) {
+            return null;
+        }
+
         if (!DataClass.class.isAssignableFrom(clazz)) {
             throw new IllegalArgumentException("Class must implement DataClass");
         }
