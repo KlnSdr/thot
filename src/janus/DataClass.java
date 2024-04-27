@@ -1,11 +1,11 @@
 package janus;
 
-import dobby.util.Json;
+import dobby.util.json.NewJson;
 
 import java.io.Serializable;
 
 public interface DataClass extends Serializable {
     String getKey();
 
-    Json toJson();
+    NewJson toJson();
 }

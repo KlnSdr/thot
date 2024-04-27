@@ -1,6 +1,6 @@
 package janus;
 
-import dobby.util.Json;
+import dobby.util.json.NewJson;
 import dobby.util.logging.Logger;
 import janus.annotations.*;
 
@@ -13,7 +13,7 @@ import java.util.UUID;
 public class Janus {
     private static final Logger LOGGER = new Logger(Janus.class);
 
-    public static <T extends DataClass> T parse(Json json, Class<T> clazz) {
+    public static <T extends DataClass> T parse(NewJson json, Class<T> clazz) {
         if (json == null) {
             return null;
         }
@@ -62,7 +62,7 @@ public class Janus {
                 } else if (field.isAnnotationPresent(JanusDataClass.class)) {
                     final JanusDataClass annotation = field.getAnnotation(JanusDataClass.class);
                     final String key = annotation.value();
-                    final Json value = json.getJson(key);
+                    final NewJson value = json.getJson(key);
 
                     final Class<?> dataClass = field.getType();
                     if (!DataClass.class.isAssignableFrom(dataClass)) {
@@ -132,7 +132,7 @@ public class Janus {
                             list.add(element);
                             continue;
                         }
-                        final Json elementJson = (Json) element;
+                        final NewJson elementJson = (NewJson) element;
                         @SuppressWarnings("unchecked") final DataClass dataInstance = parse(elementJson,
                                 (Class<DataClass>) elementType);
                         list.add(dataInstance);

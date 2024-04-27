@@ -4,7 +4,7 @@
     "threads": 10,
     "mode": "pure",
     "scheduler": {
-      "disabled": "true"
+      "disabled": true
     }
   },
   "application": {
