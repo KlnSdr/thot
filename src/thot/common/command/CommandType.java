@@ -1,5 +1,5 @@
 package thot.common.command;
 
 public enum CommandType {
-    READ, WRITE, DELETE
+    READ, WRITE, DELETE, KEYS
 }

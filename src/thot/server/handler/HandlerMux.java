@@ -7,6 +7,7 @@ import thot.common.command.CommandType;
 import thot.common.response.Response;
 import thot.common.response.ResponseType;
 import thot.server.handler.delete.DeleteHandler;
+import thot.server.handler.keys.KeysHandler;
 import thot.server.handler.read.ReadHandler;
 import thot.server.handler.write.WriteHandler;
 
@@ -38,6 +39,8 @@ public class HandlerMux implements PureRequestHandler {
             response = new WriteHandler().handle(command);
         } else if (commandType == CommandType.DELETE) {
             response = new DeleteHandler().handle(command);
+        } else if (commandType == CommandType.KEYS) {
+            response = new KeysHandler().handle(command);
         } else {
             response = unknownCommandType(command);
         }
