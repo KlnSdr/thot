@@ -36,6 +36,9 @@ public class Connector {
         LOGGER.info("read pattern: " + Arrays.toString(val3));
         String[] keys = getKeys("temperatureValues");
         LOGGER.info("keys: " + Arrays.toString(keys));
+
+        String[] buckets = getBuckets();
+        LOGGER.info("buckets: " + Arrays.toString(buckets));
 //        boolean didDelete = delete("temperatureValues", "2023-01-01");
 //        LOGGER.info("delete: " + didDelete);
 //        String val3 = read("temperatureValues", "2023-01-01", String.class);
@@ -114,6 +117,21 @@ public class Connector {
     public static String[] getKeys(String bucketName) {
         try {
             Command command = new Command(CommandType.KEYS, bucketName, null);
+            Response response = sendRequest(command);
+            if (response.getResponseType() == ResponseType.SUCCESS) {
+                return (String[]) response.getValue();
+            } else {
+                return new String[0];
+            }
+        } catch (IOException | ClassNotFoundException e) {
+            LOGGER.trace(e);
+            return new String[0];
+        }
+    }
+
+    public static String[] getBuckets() {
+        try {
+            Command command = new Command(CommandType.BUCKETS, null, null);
             Response response = sendRequest(command);
             if (response.getResponseType() == ResponseType.SUCCESS) {
                 return (String[]) response.getValue();

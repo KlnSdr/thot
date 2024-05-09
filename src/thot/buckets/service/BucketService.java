@@ -5,6 +5,7 @@ import thot.buckets.Bucket;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static thot.Thot.getBasePath;
@@ -23,6 +24,10 @@ public class BucketService {
             instance = new BucketService();
         }
         return instance;
+    }
+
+    public Set<String> getBucketNames() {
+        return this.buckets.keySet();
     }
 
     public Bucket find(String name) {

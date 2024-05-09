@@ -8,6 +8,7 @@ import thot.common.response.Response;
 import thot.common.response.ResponseType;
 import thot.server.handler.delete.DeleteHandler;
 import thot.server.handler.keys.KeysHandler;
+import thot.server.handler.names.BucketNameHandler;
 import thot.server.handler.read.ReadHandler;
 import thot.server.handler.write.WriteHandler;
 
@@ -33,16 +34,24 @@ public class HandlerMux implements PureRequestHandler {
 
         Response response;
 
-        if (commandType == CommandType.READ) {
-            response = new ReadHandler().handle(command);
-        } else if (commandType == CommandType.WRITE) {
-            response = new WriteHandler().handle(command);
-        } else if (commandType == CommandType.DELETE) {
-            response = new DeleteHandler().handle(command);
-        } else if (commandType == CommandType.KEYS) {
-            response = new KeysHandler().handle(command);
-        } else {
-            response = unknownCommandType(command);
+        switch (commandType) {
+            case READ:
+                response = new ReadHandler().handle(command);
+                break;
+            case WRITE:
+                response = new WriteHandler().handle(command);
+                break;
+            case DELETE:
+                response = new DeleteHandler().handle(command);
+                break;
+            case KEYS:
+                response = new KeysHandler().handle(command);
+                break;
+            case BUCKETS:
+                response = new BucketNameHandler().handle(command);
+                break;
+            default:
+                response = unknownCommandType(command);
         }
 
         ObjectOutputStream ostream = new ObjectOutputStream(socket.getOutputStream());
