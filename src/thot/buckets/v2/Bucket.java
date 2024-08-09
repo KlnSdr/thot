@@ -109,7 +109,13 @@ public class Bucket {
         String bucketName = this.subBuckets.get(keyHash);
         if (bucketName == null) {
             LOGGER.info("No sub-bucket found for key hash '" + keyHash + "', creating new sub-bucket");
-            bucketName = this.name + "-" + keyHash;
+            final int lastDash =
+            this.name.lastIndexOf('-');
+            if (lastDash != -1) {
+                bucketName = this.name.substring(0, lastDash) + "-" + keyHash;
+            } else {
+                bucketName = this.name + "-" + keyHash;
+            }
             this.subBuckets.put(keyHash, bucketName);
             BucketService.getInstance().create(bucketName, maxKeys, keyHashSubstringLength + 1);
         }
