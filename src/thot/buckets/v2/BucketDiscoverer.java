@@ -2,11 +2,10 @@ package thot.buckets.v2;
 
 import dobby.util.Classloader;
 import dobby.util.logging.Logger;
-import thot.buckets.Bucket;
-import thot.buckets.service.BucketService;
+import thot.buckets.v2.service.BucketService;
 
 public class BucketDiscoverer extends Classloader<Object> {
-    private static final Logger LOGGER = new Logger(thot.buckets.BucketDiscoverer.class);
+    private static final Logger LOGGER = new Logger(BucketDiscoverer.class);
 
     private BucketDiscoverer(String packageName) {
         this.packageName = packageName;
@@ -24,12 +23,12 @@ public class BucketDiscoverer extends Classloader<Object> {
         BucketDiscoverer discoverer = new BucketDiscoverer(rootPackage);
         discoverer.loadClasses().forEach(discoverer::analyzeClass);
         String finalRootPackage = rootPackage;
-        discoverer.getPackages().forEach(subpackage -> thot.buckets.BucketDiscoverer.discoverRoutes(finalRootPackage + "." + subpackage));
+        discoverer.getPackages().forEach(subpackage -> BucketDiscoverer.discoverRoutes(finalRootPackage + "." + subpackage));
     }
 
     private void analyzeClass(Class<?> clazz) {
         if (clazz.isAnnotationPresent(thot.annotations.v2.Bucket.class)) {
-            final String bucketName = clazz.getAnnotation(thot.annotations.Bucket.class).value();
+            final String bucketName = clazz.getAnnotation(thot.annotations.v2.Bucket.class).value();
 
             Bucket bucket = BucketService.getInstance().find(bucketName);
 
