@@ -1,4 +1,4 @@
-package thot.buckets;
+package thot.buckets.v2;
 
 import dobby.util.logging.Logger;
 
@@ -9,8 +9,8 @@ import java.util.HexFormat;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class NewBucket {
-    private static final Logger LOGGER = new Logger(NewBucket.class);
+public class Bucket {
+    private static final Logger LOGGER = new Logger(Bucket.class);
     private final String name;
     private final int maxKeys;
     private final int keyHashSubstringLength;
@@ -18,7 +18,7 @@ public class NewBucket {
     private final ConcurrentHashMap<String, String> subBuckets;
     private boolean isLeaf = true;
 
-    public NewBucket(String name, int maxKeys, int keyHashSubstringLength) {
+    public Bucket(String name, int maxKeys, int keyHashSubstringLength) {
         this.data = new ConcurrentHashMap<>();
         this.subBuckets = new ConcurrentHashMap<>();
         this.name = name;
@@ -27,11 +27,11 @@ public class NewBucket {
         loadFromDisk();
     }
 
-    public NewBucket(String name, int maxKeys) {
+    public Bucket(String name, int maxKeys) {
         this(name, maxKeys, 1);
     }
 
-    public NewBucket(String name) {
+    public Bucket(String name) {
         this(name, 1000);
     }
 
