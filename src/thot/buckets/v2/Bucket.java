@@ -3,9 +3,7 @@ package thot.buckets.v2;
 import dobby.util.logging.Logger;
 import thot.buckets.v2.service.BucketService;
 
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.Serializable;
+import java.io.*;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -234,6 +232,19 @@ public class Bucket {
     }
 
     private void writeData() {
-        LOGGER.warn("writeData not implemented");
+        try {
+            FileOutputStream fos = new FileOutputStream(getBasePath() + this.name + ".bkt");
+            ObjectOutputStream oos = new ObjectOutputStream(fos);
+            if (this.isLeaf) {
+                oos.writeObject(this.data);
+            } else {
+                oos.writeObject(this.subBuckets);
+            }
+            oos.close();
+            fos.close();
+        } catch (IOException e) {
+            LOGGER.error("Failed to save bucket '" + this.name + "' to disk");
+            LOGGER.trace(e);
+        }
     }
 }
