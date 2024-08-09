@@ -2,12 +2,14 @@ package thot;
 
 import dobby.Dobby;
 import dobby.DobbyEntryPoint;
+import dobby.task.SchedulerService;
 import dobby.util.logging.Logger;
 import thot.buckets.BucketDiscoverer;
 import thot.buckets.service.BucketService;
 
 import java.io.File;
 import java.net.URISyntaxException;
+import java.util.concurrent.TimeUnit;
 
 public class Thot implements DobbyEntryPoint {
     private static final Logger LOGGER = new Logger(Thot.class);
@@ -27,6 +29,11 @@ public class Thot implements DobbyEntryPoint {
         BucketService.getInstance();
         createBucketDirectoryIfNeeded();
         BucketDiscoverer.discoverRoutes("");
+
+        LOGGER.info("removing default tasks added by dobby...");
+        SchedulerService.getInstance().stopAll();
+        LOGGER.info("adding task to evict buckets every 10 minutes...");
+        SchedulerService.getInstance().addRepeating(() -> BucketService.getInstance().evictBuckets(), 10, TimeUnit.MINUTES);
     }
 
     private void prependJarPathToBasePath() {

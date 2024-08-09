@@ -20,23 +20,23 @@ public class Bucket implements Serializable {
     }
 
     public void write(String key, Serializable value) {
-        LOGGER.info("Writing to bucket '" + this.name + "' with key '" + key + "'");
+        LOGGER.debug("Writing to bucket '" + this.name + "' with key '" + key + "'");
         this.bucket.put(key, value);
         saveToDisk();
     }
 
     public Serializable read(String key) {
-        LOGGER.info("Reading from bucket '" + this.name + "' with key '" + key + "'");
+        LOGGER.debug("Reading from bucket '" + this.name + "' with key '" + key + "'");
         return this.bucket.get(key);
     }
 
     public Serializable[] readPattern(String pattern) {
-        LOGGER.info("Reading from bucket '" + this.name + "' with pattern '" + pattern + "'");
+        LOGGER.debug("Reading from bucket '" + this.name + "' with pattern '" + pattern + "'");
         return this.bucket.entrySet().stream().filter(entry -> entry.getKey().matches(pattern)).map(Map.Entry::getValue).toArray(Serializable[]::new);
     }
 
     public void delete(String key) {
-        LOGGER.info("Deleting from bucket '" + this.name + "' with key '" + key + "'");
+        LOGGER.debug("Deleting from bucket '" + this.name + "' with key '" + key + "'");
         Serializable oldValue = this.bucket.remove(key);
         if (oldValue != null) {
             saveToDisk();
@@ -48,7 +48,7 @@ public class Bucket implements Serializable {
     }
 
     private void saveToDisk() {
-        LOGGER.info("Saving bucket '" + this.name + "' to disk");
+        LOGGER.debug("Saving bucket '" + this.name + "' to disk");
         try {
             FileOutputStream fos = new FileOutputStream(getBasePath() + this.name + ".bucket");
             ObjectOutputStream oos = new ObjectOutputStream(fos);
@@ -62,7 +62,7 @@ public class Bucket implements Serializable {
     }
 
     private void loadFromDisk() {
-        LOGGER.info("Loading bucket '" + this.name + "' from disk");
+        LOGGER.debug("Loading bucket '" + this.name + "' from disk");
         File file = new File(getBasePath() + this.name + ".bucket");
         if (!file.exists() || !file.isFile()) {
             return;
@@ -76,7 +76,7 @@ public class Bucket implements Serializable {
             if (object instanceof ConcurrentHashMap) {
                 this.bucket.putAll((ConcurrentHashMap<String, Serializable>) object);
             } else {
-                LOGGER.error("Failed to load bucket '" + this.name + "' from disk");
+                LOGGER.error("Failed to load bucket '" + this.name + "' from disk. Invalid data");
             }
         } catch (IOException | ClassNotFoundException e) {
             LOGGER.error("Failed to load bucket '" + this.name + "' from disk");

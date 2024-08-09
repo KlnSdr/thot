@@ -17,7 +17,6 @@ import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.net.Socket;
 import java.util.Arrays;
-import java.util.Set;
 
 public class Connector {
     private static final Logger LOGGER = new Logger(Connector.class);
@@ -77,6 +76,7 @@ public class Connector {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public static <T> T[] readPattern(String bucketName, String pattern, Class<? extends T> comonentTypeClass) {
         try {
             Command command = new Command(CommandType.READ, bucketName, new ReadPayload(pattern, KeyType.REGEX));
