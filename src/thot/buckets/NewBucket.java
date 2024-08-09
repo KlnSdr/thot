@@ -3,6 +3,9 @@ package thot.buckets;
 import dobby.util.logging.Logger;
 
 import java.io.Serializable;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.HexFormat;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -10,16 +13,22 @@ public class NewBucket {
     private static final Logger LOGGER = new Logger(NewBucket.class);
     private final String name;
     private final int maxKeys;
+    private final int keyHashSubstringLength;
     private final ConcurrentHashMap<String, Serializable> data;
     private final ConcurrentHashMap<String, String> subBuckets;
     private boolean isLeaf = true;
 
-    public NewBucket(String name, int maxKeys) {
+    public NewBucket(String name, int maxKeys, int keyHashSubstringLength) {
         this.data = new ConcurrentHashMap<>();
         this.subBuckets = new ConcurrentHashMap<>();
         this.name = name;
         this.maxKeys = maxKeys;
+        this.keyHashSubstringLength = keyHashSubstringLength;
         loadFromDisk();
+    }
+
+    public NewBucket(String name, int maxKeys) {
+        this(name, maxKeys, 1);
     }
 
     public NewBucket(String name) {
@@ -74,6 +83,48 @@ public class NewBucket {
         }
     }
 
+    private String getSubBucketFor(String key) {
+        if (this.isLeaf) {
+            LOGGER.warn("getSubBucketFor called on leaf bucket");
+            return null;
+        }
+
+        final String keyHash = calculateKeyHash(key);
+        if (keyHash == null) {
+            return null;
+        }
+
+        return getSubBucketForHash(keyHash.substring(0, this.keyHashSubstringLength));
+    }
+
+    private String getSubBucketForHash(String keyHash) {
+        if (this.isLeaf) {
+            LOGGER.warn("getSubBucketForHash called on leaf bucket");
+            return null;
+        }
+
+        String bucketName = this.subBuckets.get(keyHash);
+        if (bucketName == null) {
+            LOGGER.info("No sub-bucket found for key hash '" + keyHash + "', creating new sub-bucket");
+            bucketName = this.name + "-" + keyHash;
+            this.subBuckets.put(keyHash, bucketName);
+            // todo call bucket service to create new bucket
+        }
+        return bucketName;
+    }
+
+    private String calculateKeyHash(String key) {
+        try {
+            final MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            final byte[] hashBytes = digest.digest(key.getBytes());
+            return HexFormat.of().formatHex(hashBytes);
+        } catch (NoSuchAlgorithmException e) {
+            LOGGER.error("Failed to calculate hash for key '" + key + "'");
+            LOGGER.trace(e);
+            return null;
+        }
+    }
+
     private String[] getKeysFromSubBucket() {
         LOGGER.warn("getKeysFromSubBucket not implemented");
         return new String[0];
@@ -103,11 +154,23 @@ public class NewBucket {
     }
 
     private void splitBucket() {
-        LOGGER.warn("splitBucket not implemented");
+        final ConcurrentHashMap<String, Serializable> newData = new ConcurrentHashMap<>(this.data);
+        this.data.clear();
+        this.isLeaf = false;
+
+        for (Map.Entry<String, Serializable> entry : newData.entrySet()) {
+            final String subBucketName = getSubBucketFor(entry.getKey());
+            writeToSubBucket(subBucketName, entry.getKey(), entry.getValue());
+        }
+    }
+
+    private void writeToSubBucket(String bucketName, String key, Serializable value) {
+        LOGGER.warn("writeToSubBucket not implemented");
     }
 
     private void writeToSubBucket(String key, Serializable value) {
-        LOGGER.warn("writeToSubBucket not implemented");
+        final String subBucketName = getSubBucketFor(key);
+        writeToSubBucket(subBucketName, key, value);
     }
 
     private void loadFromDisk() {
