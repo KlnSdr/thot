@@ -1,10 +1,13 @@
 package thot.buckets.v2;
 
 import dobby.util.logging.Logger;
+import thot.buckets.v2.service.BucketService;
 
 import java.io.Serializable;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HexFormat;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -108,7 +111,7 @@ public class Bucket {
             LOGGER.info("No sub-bucket found for key hash '" + keyHash + "', creating new sub-bucket");
             bucketName = this.name + "-" + keyHash;
             this.subBuckets.put(keyHash, bucketName);
-            // todo call bucket service to create new bucket
+            BucketService.getInstance().create(bucketName, maxKeys, keyHashSubstringLength + 1);
         }
         return bucketName;
     }
@@ -126,21 +129,45 @@ public class Bucket {
     }
 
     private String[] getKeysFromSubBucket() {
-        LOGGER.warn("getKeysFromSubBucket not implemented");
-        return new String[0];
+        final ArrayList<String> keys = new ArrayList<>();
+        for (String subBucketName : this.subBuckets.values()) {
+            final Bucket subBucket = BucketService.getInstance().find(subBucketName);
+            if (subBucket != null) {
+                Collections.addAll(keys, subBucket.getKeys());
+            }
+        }
+        return keys.toArray(new String[0]);
     }
 
     private void deleteFromSubBucket(String key) {
-        LOGGER.warn("deleteFromSubBucket not implemented");
+        final String subBucketName = getSubBucketFor(key);
+        if (subBucketName != null) {
+            final Bucket subBucket = BucketService.getInstance().find(subBucketName);
+            if (subBucket != null) {
+                subBucket.delete(key);
+            }
+        }
     }
 
     private Serializable[] readPatternFromSubBucket(String pattern) {
-        LOGGER.warn("readPatternFromSubBucket not implemented");
-        return new Serializable[0];
+        final ArrayList<Serializable> values = new ArrayList<>();
+        for (String subBucketName : this.subBuckets.values()) {
+            final Bucket subBucket = BucketService.getInstance().find(subBucketName);
+            if (subBucket != null) {
+                Collections.addAll(values, subBucket.readPattern(pattern));
+            }
+        }
+        return values.toArray(new Serializable[0]);
     }
 
     private Serializable readFromSubBucket(String key) {
-        LOGGER.warn("readFromSubBucket not implemented");
+        final String subBucketName = getSubBucketFor(key);
+        if (subBucketName != null) {
+            final Bucket subBucket = BucketService.getInstance().find(subBucketName);
+            if (subBucket != null) {
+                return subBucket.read(key);
+            }
+        }
         return null;
     }
 
@@ -165,7 +192,10 @@ public class Bucket {
     }
 
     private void writeToSubBucket(String bucketName, String key, Serializable value) {
-        LOGGER.warn("writeToSubBucket not implemented");
+        final Bucket subBucket = BucketService.getInstance().find(bucketName);
+        if (subBucket != null) {
+            subBucket.write(key, value);
+        }
     }
 
     private void writeToSubBucket(String key, Serializable value) {

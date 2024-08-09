@@ -52,6 +52,31 @@ public class BucketService {
         return bucket;
     }
 
+    public String[] getKeys(String name) {
+        if (!this.knownBuckets.contains(name)) {
+            return new String[0];
+        }
+
+        Bucket bucket;
+        if (!this.buckets.containsKey(name)) {
+            bucket = new Bucket(name);
+            this.buckets.put(name, bucket);
+        } else {
+            bucket = this.buckets.get(name);
+        }
+        updateLastAccessed(name);
+        return bucket.getKeys();
+    }
+
+    public Bucket create(String name, int maxKeys, int hashLength) {
+        if (this.knownBuckets.contains(name)) {
+            throw new IllegalArgumentException("Bucket already exists");
+        }
+        this.buckets.put(name, new Bucket(name, maxKeys, hashLength));
+        this.knownBuckets.add(name);
+        return find(name);
+    }
+
     public Bucket create(String name) {
         if (this.knownBuckets.contains(name)) {
             throw new IllegalArgumentException("Bucket already exists");
