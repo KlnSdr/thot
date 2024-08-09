@@ -3,6 +3,8 @@ package thot.buckets.v2;
 import dobby.util.logging.Logger;
 import thot.buckets.v2.service.BucketService;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.Serializable;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -11,6 +13,8 @@ import java.util.Collections;
 import java.util.HexFormat;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import static thot.Thot.getBasePath;
 
 public class Bucket {
     private static final Logger LOGGER = new Logger(Bucket.class);
@@ -110,7 +114,7 @@ public class Bucket {
         if (bucketName == null) {
             LOGGER.info("No sub-bucket found for key hash '" + keyHash + "', creating new sub-bucket");
             final int lastDash =
-            this.name.lastIndexOf('-');
+                    this.name.lastIndexOf('-');
             if (lastDash != -1) {
                 bucketName = this.name.substring(0, lastDash) + "-" + keyHash;
             } else {
@@ -214,6 +218,22 @@ public class Bucket {
     }
 
     private void saveToDisk() {
-        LOGGER.warn("saveToDisk not implemented");
+        writeConfig();
+        writeData();
+    }
+
+    private void writeConfig() {
+        try (FileWriter writer = new FileWriter(getBasePath() + this.name + ".config")) {
+            writer.write(this.maxKeys + System.lineSeparator());
+            writer.write(this.keyHashSubstringLength + System.lineSeparator());
+            writer.write(this.isLeaf + System.lineSeparator());
+        } catch (IOException e) {
+            LOGGER.error("Failed to save bucket '" + this.name + "' config to disk");
+            LOGGER.trace(e);
+        }
+    }
+
+    private void writeData() {
+        LOGGER.warn("writeData not implemented");
     }
 }
