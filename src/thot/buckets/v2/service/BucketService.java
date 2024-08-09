@@ -121,8 +121,8 @@ public class BucketService {
         }
 
         for (File file : Objects.requireNonNull(folder.listFiles())) {
-            if (file.isFile() && file.getName().endsWith(".bucket")) {
-                bucketNames.add(file.getName().replace(".bucket", ""));
+            if (file.isFile() && file.getName().endsWith(".config")) {
+                bucketNames.add(file.getName().replace(".config", ""));
             }
         }
         return bucketNames.toArray(new String[0]);

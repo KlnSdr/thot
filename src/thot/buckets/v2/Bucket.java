@@ -17,8 +17,8 @@ import static thot.Thot.getBasePath;
 public class Bucket {
     private static final Logger LOGGER = new Logger(Bucket.class);
     private final String name;
-    private final int maxKeys;
-    private final int keyHashSubstringLength;
+    private int maxKeys;
+    private int keyHashSubstringLength;
     private final ConcurrentHashMap<String, Serializable> data;
     private final ConcurrentHashMap<String, String> subBuckets;
     private boolean isLeaf = true;
@@ -181,11 +181,11 @@ public class Bucket {
 
     private void writeLeaf(String key, Serializable value) {
         this.data.put(key, value);
-        saveToDisk();
 
         if (this.data.size() > this.maxKeys) {
             splitBucket();
         }
+        saveToDisk();
     }
 
     private void splitBucket() {
@@ -212,7 +212,35 @@ public class Bucket {
     }
 
     private void loadFromDisk() {
-        LOGGER.warn("loadFromDisk not implemented");
+        File file = new File(getBasePath() + this.name + ".config");
+        if (!file.exists() || !file.isFile()) {
+            LOGGER.warn("Bucket '" + this.name + "' does not exist on disk");
+            return;
+        }
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            this.maxKeys = Integer.parseInt(reader.readLine());
+            this.keyHashSubstringLength = Integer.parseInt(reader.readLine());
+            this.isLeaf = Boolean.parseBoolean(reader.readLine());
+        } catch (IOException e) {
+            LOGGER.error("Failed to load bucket '" + this.name + "' config from disk");
+            LOGGER.trace(e);
+            LOGGER.warn("Using default values for bucket '" + this.name + "'");
+        }
+
+        try {
+            FileInputStream fis = new FileInputStream(getBasePath() + this.name + ".bkt");
+            ObjectInputStream ois = new ObjectInputStream(fis);
+            if (this.isLeaf) {
+                this.data.putAll((ConcurrentHashMap<String, Serializable>) ois.readObject());
+            } else {
+                this.subBuckets.putAll((ConcurrentHashMap<String, String>) ois.readObject());
+            }
+            ois.close();
+            fis.close();
+        } catch (IOException | ClassNotFoundException e) {
+            LOGGER.error("Failed to load bucket '" + this.name + "' from disk");
+            LOGGER.trace(e);
+        }
     }
 
     private void saveToDisk() {
