@@ -88,6 +88,13 @@ public class Thot implements DobbyEntryPoint {
             keys.forEach(key -> {
                 newBucket.write(key, oldBucket.read(key));
             });
+
+            // ensure bucket is created and synced to disk even if the old one is empty
+            if (keys.isEmpty()) {
+                newBucket.write("THOT_MIGRATION_TMP_KEY", "TEST");
+                newBucket.delete("THOT_MIGRATION_TMP_KEY");
+            }
+
             oldService.delete(bucketName);
         });
 
