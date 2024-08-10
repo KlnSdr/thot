@@ -64,5 +64,6 @@ public class Thot implements DobbyEntryPoint {
         Config.getInstance().setBoolean("dobby.scheduler.disabled", false);
         LOGGER.info("adding task to evict buckets every 10 minutes...");
         SchedulerService.getInstance().addRepeating(() -> BucketService.getInstance().evictBuckets(), 10, TimeUnit.MINUTES);
+        SchedulerService.getInstance().addRepeating(() -> thot.buckets.v2.service.BucketService.getInstance().evictBuckets(), 10, TimeUnit.MINUTES);
     }
 }
