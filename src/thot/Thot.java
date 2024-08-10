@@ -33,8 +33,8 @@ public class Thot implements DobbyEntryPoint {
         prependJarPathToBasePath();
         thot.buckets.v2.service.BucketService.getInstance();
         createBucketDirectoryIfNeeded();
-        thot.buckets.v2.BucketDiscoverer.discoverBuckets("");
         migrateOldBuckets();
+        thot.buckets.v2.BucketDiscoverer.discoverBuckets("");
     }
 
     private void migrateOldBuckets() {
