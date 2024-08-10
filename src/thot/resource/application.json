@@ -2,7 +2,11 @@
   "dobby": {
     "port": 12903,
     "threads": 10,
-    "mode": "pure"
+    "mode": "pure",
+    "logLevel": "INFO",
+    "scheduler": {
+      "disabled": true
+    }
   },
   "application": {
     "name": "thot",
