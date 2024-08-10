@@ -5,8 +5,6 @@ import dobby.DobbyEntryPoint;
 import dobby.task.SchedulerService;
 import dobby.util.Config;
 import dobby.util.logging.Logger;
-import thot.buckets.BucketDiscoverer;
-import thot.buckets.service.BucketService;
 
 import java.io.File;
 import java.net.URISyntaxException;
@@ -27,10 +25,8 @@ public class Thot implements DobbyEntryPoint {
     @Override
     public void preStart() {
         prependJarPathToBasePath();
-        BucketService.getInstance();
         thot.buckets.v2.service.BucketService.getInstance();
         createBucketDirectoryIfNeeded();
-        BucketDiscoverer.discoverRoutes("");
         thot.buckets.v2.BucketDiscoverer.discoverRoutes("");
     }
 
@@ -63,7 +59,6 @@ public class Thot implements DobbyEntryPoint {
     public void postStart() {
         Config.getInstance().setBoolean("dobby.scheduler.disabled", false);
         LOGGER.info("adding task to evict buckets every 10 minutes...");
-        SchedulerService.getInstance().addRepeating(() -> BucketService.getInstance().evictBuckets(), 10, TimeUnit.MINUTES);
         SchedulerService.getInstance().addRepeating(() -> thot.buckets.v2.service.BucketService.getInstance().evictBuckets(), 10, TimeUnit.MINUTES);
     }
 }
