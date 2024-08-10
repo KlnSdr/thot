@@ -37,7 +37,7 @@ public class Bucket {
     }
 
     public Bucket(String name) {
-        this(name, 1000);
+        this(name, 200);
     }
 
     public void write(String key, Serializable value) {

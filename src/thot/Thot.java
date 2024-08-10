@@ -5,10 +5,16 @@ import dobby.DobbyEntryPoint;
 import dobby.task.SchedulerService;
 import dobby.util.Config;
 import dobby.util.logging.Logger;
+import thot.buckets.service.BucketService;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Thot implements DobbyEntryPoint {
     private static final Logger LOGGER = new Logger(Thot.class);
@@ -27,7 +33,95 @@ public class Thot implements DobbyEntryPoint {
         prependJarPathToBasePath();
         thot.buckets.v2.service.BucketService.getInstance();
         createBucketDirectoryIfNeeded();
-        thot.buckets.v2.BucketDiscoverer.discoverRoutes("");
+        thot.buckets.v2.BucketDiscoverer.discoverBuckets("");
+        migrateOldBuckets();
+    }
+
+    private void migrateOldBuckets() {
+        final Set<String> oldBucketNames = BucketService.getInstance().getBucketNames();
+        if (oldBucketNames.isEmpty()) {
+            return;
+        }
+        LOGGER.info("Migrating old buckets...");
+        LOGGER.info("Creating backup directory...");
+        createBackupDir();
+        LOGGER.info("Backing up old buckets...");
+        final boolean wasBackupSuccessful = copyOldFilesToBackup(oldBucketNames);
+
+        if (!wasBackupSuccessful) {
+            LOGGER.error("Failed to backup old buckets. Aborting migration.");
+            return;
+        }
+
+        final boolean convertWasSuccessful = convertToNewBuckets(oldBucketNames);
+
+        if (!convertWasSuccessful) {
+            LOGGER.error("Failed to convert old buckets. Aborting migration.");
+            return;
+        }
+
+        LOGGER.info("Old buckets migrated successfully!");
+        LOGGER.info("Removing old buckets...");
+
+        final boolean didRemoveOldBuckets = removeOldBuckets(oldBucketNames);
+
+        if (!didRemoveOldBuckets) {
+            LOGGER.error("Failed to remove old buckets. Aborting migration.");
+            return;
+        }
+
+        LOGGER.info("migration done!");
+    }
+
+    private boolean convertToNewBuckets(Set<String> oldBucketNames) {
+        final BucketService oldService = BucketService.getInstance();
+        final thot.buckets.v2.service.BucketService newService = thot.buckets.v2.service.BucketService.getInstance();
+
+        AtomicBoolean success = new AtomicBoolean(true);
+
+        oldBucketNames.forEach(bucketName -> {
+            LOGGER.info("migrating bucket: " + bucketName);
+            final thot.buckets.v2.Bucket newBucket = newService.create(bucketName);
+
+            final thot.buckets.Bucket oldBucket = oldService.find(bucketName);
+            final Set<String> keys = oldBucket.getKeys();
+            keys.forEach(key -> {
+                newBucket.write(key, oldBucket.read(key));
+            });
+            oldService.delete(bucketName);
+        });
+
+        return success.get();
+    }
+
+    private boolean removeOldBuckets(Set<String> oldBucketNames) {
+        AtomicBoolean success = new AtomicBoolean(true);
+        oldBucketNames.forEach(bucketName -> {
+            final File bucketFile = new File(basePath + bucketName + ".bucket");
+            final boolean didDelete = bucketFile.delete();
+            if (!didDelete) {
+                LOGGER.error("Failed to delete old bucket file: " + bucketName);
+                success.set(false);
+            }
+        });
+
+        return success.get();
+    }
+
+    private boolean copyOldFilesToBackup(Set<String> oldBucketNames) {
+        AtomicBoolean success = new AtomicBoolean(true);
+        oldBucketNames.forEach(bucketName -> {
+            final File bucketFile = new File(basePath + bucketName + ".bucket");
+            final File backupFile = new File(basePath + "backup/" + bucketName + ".bucket");
+            try {
+                Files.copy(bucketFile.toPath(), backupFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            } catch (IOException e) {
+                LOGGER.error("Failed to copy bucket file: " + bucketName);
+                LOGGER.trace(e);
+                success.set(false);
+            }
+        });
+        return success.get();
     }
 
     private void prependJarPathToBasePath() {
@@ -43,14 +137,22 @@ public class Thot implements DobbyEntryPoint {
     }
 
     private void createBucketDirectoryIfNeeded() {
-        final File file = new java.io.File(basePath);
+        createDirectoryIfNotExists(basePath);
+    }
+
+    private void createBackupDir() {
+        createDirectoryIfNotExists(basePath + "backup/");
+    }
+
+    private void createDirectoryIfNotExists(String path) {
+        final File file = new java.io.File(path);
         if (!file.exists()) {
             final boolean didCreate = file.mkdir();
             if (!didCreate) {
                 LOGGER.error("Failed to create bucket directory");
                 System.exit(1);
             } else {
-                LOGGER.info("Created bucket directory");
+                LOGGER.info("Created directory " + path);
             }
         }
     }

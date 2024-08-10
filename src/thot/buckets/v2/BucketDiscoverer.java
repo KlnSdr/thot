@@ -16,14 +16,14 @@ public class BucketDiscoverer extends Classloader<Object> {
      *
      * @param rootPackage Root package
      */
-    public static void discoverRoutes(String rootPackage) {
+    public static void discoverBuckets(String rootPackage) {
         if (rootPackage.startsWith(".")) {
             rootPackage = rootPackage.substring(1);
         }
         BucketDiscoverer discoverer = new BucketDiscoverer(rootPackage);
         discoverer.loadClasses().forEach(discoverer::analyzeClass);
         String finalRootPackage = rootPackage;
-        discoverer.getPackages().forEach(subpackage -> BucketDiscoverer.discoverRoutes(finalRootPackage + "." + subpackage));
+        discoverer.getPackages().forEach(subpackage -> BucketDiscoverer.discoverBuckets(finalRootPackage + "." + subpackage));
     }
 
     private void analyzeClass(Class<?> clazz) {
