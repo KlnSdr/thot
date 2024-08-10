@@ -4,6 +4,7 @@ import dobby.util.logging.Logger;
 
 import java.io.*;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static thot.Thot.getBasePath;
@@ -41,6 +42,10 @@ public class Bucket implements Serializable {
         if (oldValue != null) {
             saveToDisk();
         }
+    }
+
+    public Set<String> getKeys() {
+        return this.bucket.keySet();
     }
 
     public boolean contains(String key) {

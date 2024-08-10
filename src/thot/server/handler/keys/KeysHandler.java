@@ -8,8 +8,6 @@ import thot.common.response.ResponseType;
 import thot.server.handler.Handler;
 
 import java.io.Serializable;
-import java.lang.reflect.Field;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class KeysHandler implements Handler {
     @Override
@@ -23,17 +21,7 @@ public class KeysHandler implements Handler {
             return bucketNotFoundResponse(bucketName);
         }
 
-        Field bucketField = null;
-        try {
-            bucketField = Bucket.class.getDeclaredField("bucket");
-            bucketField.setAccessible(true);
-
-            @SuppressWarnings("unchecked")
-            ConcurrentHashMap<String, Serializable> bucketMap = (ConcurrentHashMap<String, Serializable>) bucketField.get(bucket);
-            return successResponse(bucketMap.keySet().toArray(new String[0]));
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-            return errorWhileAccessingBucket(bucketName);
-        }
+        return successResponse(bucket.getKeys().toArray(new String[0]));
     }
 
     private Response successResponse(Serializable[] value) {
