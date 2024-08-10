@@ -8,4 +8,5 @@ import java.lang.annotation.RetentionPolicy;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Bucket {
     String value();
+    int maxKeys() default 100;
 }

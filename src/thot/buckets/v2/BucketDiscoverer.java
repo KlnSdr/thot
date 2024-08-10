@@ -29,12 +29,13 @@ public class BucketDiscoverer extends Classloader<Object> {
     private void analyzeClass(Class<?> clazz) {
         if (clazz.isAnnotationPresent(thot.annotations.v2.Bucket.class)) {
             final String bucketName = clazz.getAnnotation(thot.annotations.v2.Bucket.class).value();
+            final int maxKeys = clazz.getAnnotation(thot.annotations.v2.Bucket.class).maxKeys();
 
             Bucket bucket = BucketService.getInstance().find(bucketName);
 
             if (bucket == null) {
                 LOGGER.info("Could not find bucket '" + bucketName + "'. Creating it now");
-                bucket = BucketService.getInstance().create(bucketName);
+                bucket = BucketService.getInstance().create(bucketName, maxKeys, 1);
 
                 bucket.write("test", "test_value");
                 bucket.delete("test");
