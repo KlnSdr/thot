@@ -6,9 +6,6 @@ import thot.common.response.Response;
 import thot.common.response.ResponseType;
 import thot.server.handler.Handler;
 
-import java.util.Arrays;
-import java.util.Set;
-
 public class BucketNameHandler implements Handler {
     @Override
     public Response handle(Command command) {
@@ -16,10 +13,7 @@ public class BucketNameHandler implements Handler {
 
         final Response response = new Response();
         response.setResponseType(ResponseType.SUCCESS);
-        final Set<String> bucketNames = bucketService.getBucketNames();
-        bucketNames.stream().filter(bucketName -> bucketName.contains("-")).forEach(bucketNames::remove); // filter out all sub-buckets
-        final String[] bucketNamesArray = bucketNames.toArray(new String[0]);
-        Arrays.sort(bucketNamesArray);
+        final String[] bucketNamesArray = bucketService.getBucketNames().stream().filter(bucketName -> !bucketName.contains("-")).distinct().sorted().toArray(String[]::new);
         response.setValue(bucketNamesArray);
 
         return response;
