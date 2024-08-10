@@ -33,25 +33,19 @@ public class HandlerMux implements PureRequestHandler {
         CommandType commandType = command.getCommandType();
 
         Response response;
+        final Handler handler = switch (commandType) {
+            case READ -> new ReadHandler();
+            case WRITE -> new WriteHandler();
+            case DELETE -> new DeleteHandler();
+            case KEYS -> new KeysHandler();
+            case BUCKETS -> new BucketNameHandler();
+            default -> null;
+        };
 
-        switch (commandType) {
-            case READ:
-                response = new ReadHandler().handle(command);
-                break;
-            case WRITE:
-                response = new WriteHandler().handle(command);
-                break;
-            case DELETE:
-                response = new DeleteHandler().handle(command);
-                break;
-            case KEYS:
-                response = new KeysHandler().handle(command);
-                break;
-            case BUCKETS:
-                response = new BucketNameHandler().handle(command);
-                break;
-            default:
-                response = unknownCommandType(command);
+        if (handler == null) {
+            response = unknownCommandType(command);
+        } else {
+            response = handler.handle(command);
         }
 
         ObjectOutputStream ostream = new ObjectOutputStream(socket.getOutputStream());

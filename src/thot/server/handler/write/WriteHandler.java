@@ -4,8 +4,8 @@ import thot.common.command.Command;
 import thot.common.response.Response;
 import thot.common.response.ResponseType;
 import thot.server.handler.Handler;
-import thot.buckets.Bucket;
-import thot.buckets.service.BucketService;
+import thot.buckets.v2.Bucket;
+import thot.buckets.v2.service.BucketService;
 
 public class WriteHandler implements Handler {
     @Override

@@ -1,7 +1,7 @@
 package thot.server.handler.delete;
 
-import thot.buckets.Bucket;
-import thot.buckets.service.BucketService;
+import thot.buckets.v2.Bucket;
+import thot.buckets.v2.service.BucketService;
 import thot.common.command.Command;
 import thot.common.response.Response;
 import thot.common.response.ResponseType;

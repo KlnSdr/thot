@@ -1,7 +1,7 @@
 package thot.server.handler.keys;
 
-import thot.buckets.Bucket;
-import thot.buckets.service.BucketService;
+import thot.buckets.v2.Bucket;
+import thot.buckets.v2.service.BucketService;
 import thot.common.command.Command;
 import thot.common.response.Response;
 import thot.common.response.ResponseType;
@@ -21,7 +21,7 @@ public class KeysHandler implements Handler {
             return bucketNotFoundResponse(bucketName);
         }
 
-        return successResponse(bucket.getKeys().toArray(new String[0]));
+        return successResponse(bucket.getKeys());
     }
 
     private Response successResponse(Serializable[] value) {

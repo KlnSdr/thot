@@ -1,12 +1,11 @@
 package thot.server.handler.names;
 
-import thot.buckets.service.BucketService;
+import thot.buckets.v2.service.BucketService;
 import thot.common.command.Command;
 import thot.common.response.Response;
 import thot.common.response.ResponseType;
 import thot.server.handler.Handler;
 
-import java.io.Serializable;
 import java.util.Set;
 
 public class BucketNameHandler implements Handler {

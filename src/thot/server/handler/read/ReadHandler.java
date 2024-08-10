@@ -1,7 +1,7 @@
 package thot.server.handler.read;
 
-import thot.buckets.Bucket;
-import thot.buckets.service.BucketService;
+import thot.buckets.v2.Bucket;
+import thot.buckets.v2.service.BucketService;
 import thot.common.command.Command;
 import thot.common.command.KeyType;
 import thot.common.response.Response;
