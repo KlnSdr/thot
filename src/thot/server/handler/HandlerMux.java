@@ -6,6 +6,7 @@ import thot.common.command.Command;
 import thot.common.command.CommandType;
 import thot.common.response.Response;
 import thot.common.response.ResponseType;
+import thot.server.handler.create.CreateHandler;
 import thot.server.handler.delete.DeleteHandler;
 import thot.server.handler.keys.KeysHandler;
 import thot.server.handler.names.BucketNameHandler;
@@ -39,6 +40,7 @@ public class HandlerMux implements PureRequestHandler {
             case DELETE -> new DeleteHandler();
             case KEYS -> new KeysHandler();
             case BUCKETS -> new BucketNameHandler();
+            case CREATE -> new CreateHandler();
             default -> null;
         };
 

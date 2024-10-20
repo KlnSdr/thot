@@ -6,6 +6,7 @@ import thot.common.command.CommandType;
 import thot.common.command.KeyType;
 import thot.common.response.Response;
 import thot.common.response.ResponseType;
+import thot.server.handler.create.CreatePayload;
 import thot.server.handler.delete.DeletePayload;
 import thot.server.handler.read.ReadPayload;
 import thot.server.handler.write.WritePayload;
@@ -36,6 +37,9 @@ public class Connector {
         String[] keys = getKeys("temperatureValues");
         LOGGER.info("keys: " + Arrays.toString(keys));
 
+        boolean didCreateVolatile = create("testVolatile", 100, true);
+        LOGGER.info(didCreateVolatile ? "created": "error");
+
         String[] buckets = getBuckets();
         LOGGER.info("buckets: " + Arrays.toString(buckets));
 //        boolean didDelete = delete("temperatureValues", "2023-01-01");
@@ -62,6 +66,31 @@ public class Connector {
         socket.close();
 
         return response;
+    }
+
+    public static boolean create(String bucketName) {
+        return create(bucketName, 100);
+    }
+
+    public static boolean create(String bucketName, int maxKeys) {
+        return create(bucketName, maxKeys, false);
+    }
+
+    public static boolean create(String bucketName, int maxKeys, boolean isVolatile) {
+        try {
+            final Command command = new Command(CommandType.CREATE, bucketName, new CreatePayload(bucketName, maxKeys, isVolatile));
+            final Response response = sendRequest(command);
+
+            if (response.getResponseType() == ResponseType.ERROR) {
+                LOGGER.error("Failed to create bucket " + bucketName);
+                LOGGER.error(response.getError());
+                return false;
+            }
+            return true;
+        } catch (IOException | ClassNotFoundException e) {
+            LOGGER.trace(e);
+            return false;
+        }
     }
 
     public static boolean write(String bucketName, String key, Serializable value) {
