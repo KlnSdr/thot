@@ -15,11 +15,13 @@ public class BucketService {
     private final ConcurrentHashMap<String, Date> lastAccessed;
     private final ConcurrentHashMap<String, Bucket> buckets;
     private final List<String> knownBuckets;
+    private final List<String> volatileBuckets;
 
     private BucketService() {
         this.buckets = new ConcurrentHashMap<>();
         this.lastAccessed = new ConcurrentHashMap<>();
         this.knownBuckets = new ArrayList<>();
+        this.volatileBuckets = new ArrayList<>();
         loadBucketsFromDisk();
     }
 
@@ -74,6 +76,9 @@ public class BucketService {
         }
         this.buckets.put(name, new Bucket(name, maxKeys, hashLength, isVolatile));
         this.knownBuckets.add(name);
+        if (isVolatile) {
+            this.volatileBuckets.add(name);
+        }
         return find(name);
     }
 
@@ -102,13 +107,14 @@ public class BucketService {
         this.buckets.remove(name);
         this.lastAccessed.remove(name);
         this.knownBuckets.remove(name);
+        this.volatileBuckets.remove(name);
     }
 
     public void evictBuckets() {
         final Date now = new Date();
         for (String name : this.lastAccessed.keySet()) {
             final Date lastAccessed = this.lastAccessed.get(name);
-            if (now.getTime() - lastAccessed.getTime() > 3_600_000 /* 1 h */) {
+            if (now.getTime() - lastAccessed.getTime() > 3_600_000 /* 1 h */ && !this.volatileBuckets.contains(name)) {
                 this.buckets.remove(name);
                 this.lastAccessed.remove(name);
                 LOGGER.debug("Evicted bucket '" + name + "'");
