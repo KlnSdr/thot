@@ -18,18 +18,24 @@ public class Bucket {
     private static final Logger LOGGER = new Logger(Bucket.class);
     private final String name;
     private int maxKeys;
+    private final boolean isVolatile;
     private int keyHashSubstringLength;
     private final ConcurrentHashMap<String, Serializable> data;
     private final ConcurrentHashMap<String, String> subBuckets;
     private boolean isLeaf = true;
 
-    public Bucket(String name, int maxKeys, int keyHashSubstringLength) {
+    public Bucket(String name, int maxKeys, int keyHashSubstringLength, boolean isVolatile) {
         this.data = new ConcurrentHashMap<>();
         this.subBuckets = new ConcurrentHashMap<>();
         this.name = name;
         this.maxKeys = maxKeys;
         this.keyHashSubstringLength = keyHashSubstringLength;
+        this.isVolatile = isVolatile;
         loadFromDisk();
+    }
+
+    public Bucket(String name, int maxKeys, int keyHashSubstringLength) {
+        this(name, maxKeys, keyHashSubstringLength, false);
     }
 
     public Bucket(String name, int maxKeys) {
@@ -212,6 +218,10 @@ public class Bucket {
     }
 
     private void loadFromDisk() {
+        if (this.isVolatile) {
+            return;
+        }
+
         File file = new File(getBasePath() + this.name + ".config");
         if (!file.exists() || !file.isFile()) {
             LOGGER.warn("Bucket '" + this.name + "' does not exist on disk");
@@ -244,6 +254,9 @@ public class Bucket {
     }
 
     private void saveToDisk() {
+        if (this.isVolatile) {
+            return;
+        }
         writeConfig();
         writeData();
     }

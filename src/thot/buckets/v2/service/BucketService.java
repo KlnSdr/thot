@@ -68,6 +68,15 @@ public class BucketService {
         return bucket.getKeys();
     }
 
+    public Bucket create(String name, int maxKeys, int hashLength, boolean isVolatile) {
+        if (this.knownBuckets.contains(name)) {
+            throw new IllegalArgumentException("Bucket already exists");
+        }
+        this.buckets.put(name, new Bucket(name, maxKeys, hashLength, isVolatile));
+        this.knownBuckets.add(name);
+        return find(name);
+    }
+
     public Bucket create(String name, int maxKeys, int hashLength) {
         if (this.knownBuckets.contains(name)) {
             throw new IllegalArgumentException("Bucket already exists");

@@ -30,12 +30,13 @@ public class BucketDiscoverer extends Classloader<Object> {
         if (clazz.isAnnotationPresent(thot.annotations.v2.Bucket.class)) {
             final String bucketName = clazz.getAnnotation(thot.annotations.v2.Bucket.class).value();
             final int maxKeys = clazz.getAnnotation(thot.annotations.v2.Bucket.class).maxKeys();
+            final boolean isVolatile = clazz.getAnnotation(thot.annotations.v2.Bucket.class).isVolatile();
 
             Bucket bucket = BucketService.getInstance().find(bucketName);
 
             if (bucket == null) {
                 LOGGER.info("Could not find bucket '" + bucketName + "'. Creating it now");
-                bucket = BucketService.getInstance().create(bucketName, maxKeys, 1);
+                bucket = BucketService.getInstance().create(bucketName, maxKeys, 1, isVolatile);
 
                 bucket.write("test", "test_value");
                 bucket.delete("test");

@@ -9,4 +9,5 @@ import java.lang.annotation.RetentionPolicy;
 public @interface Bucket {
     String value();
     int maxKeys() default 100;
+    boolean isVolatile() default false;
 }
