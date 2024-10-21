@@ -93,9 +93,17 @@ public class Connector {
         }
     }
 
+    public static boolean writeCreateVolatile(String bucketName, String key, Serializable value) {
+        return write(bucketName, key, value, true);
+    }
+
     public static boolean write(String bucketName, String key, Serializable value) {
+        return write(bucketName, key, value, false);
+    }
+
+    private static boolean write(String bucketName, String key, Serializable value, boolean createVolatileBucket) {
         try {
-            Command command = new Command(CommandType.WRITE, bucketName, new WritePayload(key, value));
+            Command command = new Command(CommandType.WRITE, bucketName, new WritePayload(key, value, createVolatileBucket));
             Response response = sendRequest(command);
 
             return response.getResponseType() == ResponseType.SUCCESS;

@@ -17,7 +17,11 @@ public class WriteHandler implements Handler {
 
         Bucket bucket = bucketService.find(bucketName);
         if (bucket == null) {
-            bucket = bucketService.create(bucketName);
+            if (payload.getCreateVolatile()) {
+                bucket = bucketService.create(bucketName, 100, 1, true);
+            } else {
+                bucket = bucketService.create(bucketName);
+            }
         }
 
         bucket.write(payload.getKey(), payload.getValue());
