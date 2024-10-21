@@ -125,7 +125,7 @@ public class Bucket {
                 bucketName = this.name + "-" + keyHash;
             }
             this.subBuckets.put(keyHash, bucketName);
-            BucketService.getInstance().create(bucketName, maxKeys, keyHashSubstringLength + 1);
+            BucketService.getInstance().create(bucketName, maxKeys, keyHashSubstringLength + 1, isVolatile);
         }
         return bucketName;
     }
