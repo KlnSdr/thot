@@ -1,5 +1,6 @@
 package thot.connector;
 
+import dobby.util.Config;
 import dobby.util.logging.Logger;
 import thot.common.command.Command;
 import thot.common.command.CommandType;
@@ -50,16 +51,19 @@ public class Connector {
     }
 
     private static Response sendRequest(Command command) throws IOException, ClassNotFoundException {
-        Socket socket = new Socket("localhost", 12903);
+        final String dbHost = Config.getInstance().getBoolean("application.devMode", true)
+                ? "localhost"
+                : Config.getInstance().getString("application.dbHost", "localhost");
+        final Socket socket = new Socket(dbHost, 12903);
 
-        ObjectOutputStream ostream = new ObjectOutputStream(socket.getOutputStream());
+        final ObjectOutputStream ostream = new ObjectOutputStream(socket.getOutputStream());
 
         ostream.writeObject(command);
         ostream.flush();
 
-        ObjectInputStream istream = new ObjectInputStream(socket.getInputStream());
+        final ObjectInputStream istream = new ObjectInputStream(socket.getInputStream());
 
-        Response response = (Response) istream.readObject();
+        final Response response = (Response) istream.readObject();
 
         ostream.close();
         istream.close();
