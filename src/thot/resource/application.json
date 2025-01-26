@@ -3,13 +3,13 @@
     "port": 12903,
     "threads": 10,
     "mode": "pure",
-    "logLevel": "INFO",
+    "logLevel": "WARN",
     "scheduler": {
       "disabled": true
     }
   },
   "application": {
     "name": "thot",
-    "version": "1.7"
+    "version": "1.9"
   }
 }
