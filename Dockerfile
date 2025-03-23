@@ -1,8 +1,16 @@
+FROM docker.klnsdr.com/nyx-cli:1.1 as builder
+
+WORKDIR /app
+
+COPY . .
+
+RUN nyx build
+
 FROM gcr.io/distroless/java21
 
 WORKDIR /app
 
-COPY out/artifacts/thot_jar/thot.jar /app/app.jar
+COPY /app/build/thot-1.9.jar /app/app.jar
 
 EXPOSE 12903
 

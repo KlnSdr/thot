@@ -1,0 +1,20 @@
+{
+  "remoteRepoUrl": "https://repo.klnsdr.com",
+  "project": {
+    "entry": "thot.Thot",
+    "name": "thot",
+    "version": "1.9",
+    "group": "dobby",
+    "dependencies": [
+      {
+        "group": "dobby",
+        "name": "dobby",
+        "version": "1.6"
+      }
+    ]
+  },
+  "compiler": {
+    "version": "21"
+  },
+  "exclude": []
+}
