@@ -1,11 +1,11 @@
 package thot.server.handler;
 
-import dobby.io.PureRequestHandler;
 import common.logger.Logger;
-import thot.common.command.Command;
-import thot.common.command.CommandType;
-import thot.common.response.Response;
-import thot.common.response.ResponseType;
+import dobby.io.PureRequestHandler;
+import thot.api.command.Command;
+import thot.api.command.CommandType;
+import thot.api.response.Response;
+import thot.api.response.ResponseType;
 import thot.server.handler.create.CreateHandler;
 import thot.server.handler.delete.DeleteHandler;
 import thot.server.handler.keys.KeysHandler;

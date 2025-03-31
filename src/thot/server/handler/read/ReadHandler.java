@@ -1,11 +1,12 @@
 package thot.server.handler.read;
 
+import thot.api.command.Command;
+import thot.api.command.KeyType;
+import thot.api.payload.ReadPayload;
+import thot.api.response.Response;
+import thot.api.response.ResponseType;
 import thot.buckets.v2.Bucket;
 import thot.buckets.v2.service.BucketService;
-import thot.common.command.Command;
-import thot.common.command.KeyType;
-import thot.common.response.Response;
-import thot.common.response.ResponseType;
 import thot.server.handler.Handler;
 
 import java.io.Serializable;

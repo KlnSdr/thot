@@ -1,9 +1,9 @@
 package thot.server.handler.names;
 
+import thot.api.command.Command;
+import thot.api.response.Response;
+import thot.api.response.ResponseType;
 import thot.buckets.v2.service.BucketService;
-import thot.common.command.Command;
-import thot.common.response.Response;
-import thot.common.response.ResponseType;
 import thot.server.handler.Handler;
 
 public class BucketNameHandler implements Handler {

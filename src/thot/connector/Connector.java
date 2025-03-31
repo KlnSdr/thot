@@ -1,16 +1,16 @@
 package thot.connector;
 
-import dobby.util.Config;
 import common.logger.Logger;
-import thot.common.command.Command;
-import thot.common.command.CommandType;
-import thot.common.command.KeyType;
-import thot.common.response.Response;
-import thot.common.response.ResponseType;
-import thot.server.handler.create.CreatePayload;
-import thot.server.handler.delete.DeletePayload;
-import thot.server.handler.read.ReadPayload;
-import thot.server.handler.write.WritePayload;
+import dobby.util.Config;
+import thot.api.command.Command;
+import thot.api.command.CommandType;
+import thot.api.command.KeyType;
+import thot.api.payload.CreatePayload;
+import thot.api.payload.DeletePayload;
+import thot.api.payload.ReadPayload;
+import thot.api.payload.WritePayload;
+import thot.api.response.Response;
+import thot.api.response.ResponseType;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;

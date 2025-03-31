@@ -27,10 +27,10 @@ public class BucketDiscoverer extends Classloader<Object> {
     }
 
     private void analyzeClass(Class<?> clazz) {
-        if (clazz.isAnnotationPresent(thot.annotations.v2.Bucket.class)) {
-            final String bucketName = clazz.getAnnotation(thot.annotations.v2.Bucket.class).value();
-            final int maxKeys = clazz.getAnnotation(thot.annotations.v2.Bucket.class).maxKeys();
-            final boolean isVolatile = clazz.getAnnotation(thot.annotations.v2.Bucket.class).isVolatile();
+        if (clazz.isAnnotationPresent(thot.api.annotations.v2.Bucket.class)) {
+            final String bucketName = clazz.getAnnotation(thot.api.annotations.v2.Bucket.class).value();
+            final int maxKeys = clazz.getAnnotation(thot.api.annotations.v2.Bucket.class).maxKeys();
+            final boolean isVolatile = clazz.getAnnotation(thot.api.annotations.v2.Bucket.class).isVolatile();
 
             Bucket bucket = BucketService.getInstance().find(bucketName);
 

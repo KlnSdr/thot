@@ -27,8 +27,8 @@ public class BucketDiscoverer extends Classloader<Object> {
     }
 
     private void analyzeClass(Class<?> clazz) {
-        if (clazz.isAnnotationPresent(thot.annotations.Bucket.class)) {
-            final String bucketName = clazz.getAnnotation(thot.annotations.Bucket.class).value();
+        if (clazz.isAnnotationPresent(thot.api.annotations.Bucket.class)) {
+            final String bucketName = clazz.getAnnotation(thot.api.annotations.Bucket.class).value();
 
             Bucket bucket = BucketService.getInstance().find(bucketName);
 
