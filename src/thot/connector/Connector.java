@@ -1,7 +1,7 @@
 package thot.connector;
 
 import dobby.util.Config;
-import dobby.util.logging.Logger;
+import common.logger.Logger;
 import thot.common.command.Command;
 import thot.common.command.CommandType;
 import thot.common.command.KeyType;

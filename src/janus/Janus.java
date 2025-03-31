@@ -1,7 +1,7 @@
 package janus;
 
 import dobby.util.json.NewJson;
-import dobby.util.logging.Logger;
+import common.logger.Logger;
 import janus.annotations.*;
 
 import java.lang.reflect.Field;

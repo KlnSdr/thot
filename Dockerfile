@@ -10,7 +10,7 @@ FROM gcr.io/distroless/java21
 
 WORKDIR /app
 
-COPY /app/build/thot-1.9.jar /app/app.jar
+COPY /app/build/thot-2.0.jar /app/app.jar
 
 EXPOSE 12903
 

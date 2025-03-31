@@ -1,6 +1,6 @@
 package thot.buckets.service;
 
-import dobby.util.logging.Logger;
+import common.logger.Logger;
 import thot.buckets.Bucket;
 
 import java.io.File;

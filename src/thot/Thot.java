@@ -4,7 +4,7 @@ import dobby.Dobby;
 import dobby.DobbyEntryPoint;
 import dobby.task.SchedulerService;
 import dobby.util.Config;
-import dobby.util.logging.Logger;
+import common.logger.Logger;
 import thot.buckets.service.BucketService;
 
 import java.io.File;

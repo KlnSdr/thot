@@ -1,7 +1,7 @@
 package thot.buckets;
 
 import dobby.util.Classloader;
-import dobby.util.logging.Logger;
+import common.logger.Logger;
 import thot.buckets.service.BucketService;
 
 public class BucketDiscoverer extends Classloader<Object> {
