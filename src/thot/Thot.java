@@ -3,7 +3,7 @@ package thot;
 import dobby.Dobby;
 import dobby.DobbyEntryPoint;
 import dobby.task.SchedulerService;
-import dobby.util.Config;
+import dobby.Config;
 import common.logger.Logger;
 import thot.buckets.service.BucketService;
 
