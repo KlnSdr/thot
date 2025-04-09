@@ -3,7 +3,7 @@
     "port": 12903,
     "threads": 10,
     "mode": "pure",
-    "logLevel": "WARN",
+    "logLevel": "DEBUG",
     "scheduler": {
       "disabled": true
     }
