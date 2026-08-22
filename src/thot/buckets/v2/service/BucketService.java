@@ -11,29 +11,35 @@ import static thot.Thot.getBasePath;
 
 public class BucketService {
     private static final Logger LOGGER = new Logger(BucketService.class);
-    private static BucketService instance;
+    private static volatile BucketService instance;
     private final ConcurrentHashMap<String, Date> lastAccessed;
     private final ConcurrentHashMap<String, Bucket> buckets;
-    private final List<String> knownBuckets;
-    private final List<String> volatileBuckets;
+    private final Set<String> knownBuckets;
+    private final Set<String> volatileBuckets;
 
     private BucketService() {
         this.buckets = new ConcurrentHashMap<>();
         this.lastAccessed = new ConcurrentHashMap<>();
-        this.knownBuckets = new ArrayList<>();
-        this.volatileBuckets = new ArrayList<>();
+        this.knownBuckets = ConcurrentHashMap.newKeySet();
+        this.volatileBuckets = ConcurrentHashMap.newKeySet();
         loadBucketsFromDisk();
     }
 
     public static BucketService getInstance() {
-        if (instance == null) {
-            instance = new BucketService();
+        BucketService result = instance;
+        if (result == null) {
+            synchronized (BucketService.class) {
+                result = instance;
+                if (result == null) {
+                    instance = result = new BucketService();
+                }
+            }
         }
-        return instance;
+        return result;
     }
 
     public Set<String> getBucketNames() {
-        return this.knownBuckets.stream().collect(HashSet::new, HashSet::add, HashSet::addAll); // just to not break existing code
+        return new HashSet<>(this.knownBuckets);
     }
 
     public Bucket find(String name) {
@@ -41,13 +47,7 @@ public class BucketService {
             return null;
         }
 
-        Bucket bucket;
-        if (!this.buckets.containsKey(name)) {
-            bucket = new Bucket(name);
-            this.buckets.put(name, bucket);
-        } else {
-            bucket = this.buckets.get(name);
-        }
+        final Bucket bucket = this.buckets.computeIfAbsent(name, Bucket::new);
 
         updateLastAccessed(name);
 
@@ -55,22 +55,14 @@ public class BucketService {
     }
 
     public String[] getKeys(String name) {
-        if (!this.knownBuckets.contains(name)) {
+        final Bucket bucket = find(name);
+        if (bucket == null) {
             return new String[0];
         }
-
-        Bucket bucket;
-        if (!this.buckets.containsKey(name)) {
-            bucket = new Bucket(name);
-            this.buckets.put(name, bucket);
-        } else {
-            bucket = this.buckets.get(name);
-        }
-        updateLastAccessed(name);
         return bucket.getKeys();
     }
 
-    public Bucket create(String name, int maxKeys, int hashLength, boolean isVolatile) {
+    public synchronized Bucket create(String name, int maxKeys, int hashLength, boolean isVolatile) {
         if (this.knownBuckets.contains(name)) {
             throw new IllegalArgumentException("Bucket already exists");
         }
@@ -82,7 +74,7 @@ public class BucketService {
         return find(name);
     }
 
-    public Bucket create(String name, int maxKeys, int hashLength) {
+    public synchronized Bucket create(String name, int maxKeys, int hashLength) {
         if (this.knownBuckets.contains(name)) {
             throw new IllegalArgumentException("Bucket already exists");
         }
@@ -91,7 +83,7 @@ public class BucketService {
         return find(name);
     }
 
-    public Bucket create(String name) {
+    public synchronized Bucket create(String name) {
         if (this.knownBuckets.contains(name)) {
             throw new IllegalArgumentException("Bucket already exists");
         }
@@ -100,7 +92,18 @@ public class BucketService {
         return find(name);
     }
 
-    public void delete(String name) {
+    public synchronized Bucket getOrCreate(String name, int maxKeys, int hashLength, boolean isVolatile) {
+        if (this.knownBuckets.contains(name)) {
+            return find(name);
+        }
+        return create(name, maxKeys, hashLength, isVolatile);
+    }
+
+    public synchronized Bucket getOrCreate(String name) {
+        return getOrCreate(name, 200, 1, false);
+    }
+
+    public synchronized void delete(String name) {
         if (!this.knownBuckets.contains(name)) {
             throw new IllegalArgumentException("Bucket does not exist");
         }
@@ -110,11 +113,11 @@ public class BucketService {
         this.volatileBuckets.remove(name);
     }
 
-    public void evictBuckets() {
+    public synchronized void evictBuckets() {
         final Date now = new Date();
         for (String name : this.lastAccessed.keySet()) {
             final Date lastAccessed = this.lastAccessed.get(name);
-            if (now.getTime() - lastAccessed.getTime() > 3_600_000 /* 1 h */ && !this.volatileBuckets.contains(name)) {
+            if (lastAccessed != null && now.getTime() - lastAccessed.getTime() > 3_600_000 /* 1 h */ && !this.volatileBuckets.contains(name)) {
                 this.buckets.remove(name);
                 this.lastAccessed.remove(name);
                 LOGGER.debug("Evicted bucket '" + name + "'");

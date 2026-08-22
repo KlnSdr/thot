@@ -22,7 +22,7 @@ public class Bucket {
     private int keyHashSubstringLength;
     private final ConcurrentHashMap<String, Serializable> data;
     private final ConcurrentHashMap<String, String> subBuckets;
-    private boolean isLeaf = true;
+    private volatile boolean isLeaf = true;
 
     public Bucket(String name, int maxKeys, int keyHashSubstringLength, boolean isVolatile) {
         this.data = new ConcurrentHashMap<>();
@@ -46,7 +46,7 @@ public class Bucket {
         this(name, 200);
     }
 
-    public void write(String key, Serializable value) {
+    public synchronized void write(String key, Serializable value) {
         LOGGER.debug("Writing to bucket '" + this.name + "' with key '" + key + "'");
         if (this.isLeaf) {
             writeLeaf(key, value);
@@ -55,7 +55,7 @@ public class Bucket {
         }
     }
 
-    public Serializable read(String key) {
+    public synchronized Serializable read(String key) {
         LOGGER.debug("Reading from bucket '" + this.name + "' with key '" + key + "'");
 
         if (this.isLeaf) {
@@ -65,7 +65,7 @@ public class Bucket {
         }
     }
 
-    public Serializable[] readPattern(String pattern) {
+    public synchronized Serializable[] readPattern(String pattern) {
         LOGGER.debug("Reading from bucket '" + this.name + "' with pattern '" + pattern + "'");
         if (this.isLeaf) {
             return this.data.entrySet().stream().filter(entry -> entry.getKey().matches(pattern)).map(Map.Entry::getValue).toArray(Serializable[]::new);
@@ -74,7 +74,7 @@ public class Bucket {
         }
     }
 
-    public void delete(String key) {
+    public synchronized void delete(String key) {
         LOGGER.debug("Deleting from bucket '" + this.name + "' with key '" + key + "'");
         if (this.isLeaf) {
             Serializable oldValue = this.data.remove(key);
@@ -86,7 +86,7 @@ public class Bucket {
         }
     }
 
-    public String[] getKeys() {
+    public synchronized String[] getKeys() {
         if (this.isLeaf) {
             return this.data.keySet().toArray(new String[0]);
         } else {
@@ -153,7 +153,7 @@ public class Bucket {
         return keys.toArray(new String[0]);
     }
 
-    private void deleteFromSubBucket(String key) {
+    private synchronized void deleteFromSubBucket(String key) {
         final String subBucketName = getSubBucketFor(key);
         if (subBucketName != null) {
             final Bucket subBucket = BucketService.getInstance().find(subBucketName);
@@ -185,7 +185,7 @@ public class Bucket {
         return null;
     }
 
-    private void writeLeaf(String key, Serializable value) {
+    private synchronized void writeLeaf(String key, Serializable value) {
         this.data.put(key, value);
 
         if (this.data.size() > this.maxKeys) {
@@ -194,7 +194,7 @@ public class Bucket {
         saveToDisk();
     }
 
-    private void splitBucket() {
+    private synchronized void splitBucket() {
         final ConcurrentHashMap<String, Serializable> newData = new ConcurrentHashMap<>(this.data);
         this.data.clear();
         this.isLeaf = false;
@@ -205,19 +205,19 @@ public class Bucket {
         }
     }
 
-    private void writeToSubBucket(String bucketName, String key, Serializable value) {
+    private synchronized void writeToSubBucket(String bucketName, String key, Serializable value) {
         final Bucket subBucket = BucketService.getInstance().find(bucketName);
         if (subBucket != null) {
             subBucket.write(key, value);
         }
     }
 
-    private void writeToSubBucket(String key, Serializable value) {
+    private synchronized void writeToSubBucket(String key, Serializable value) {
         final String subBucketName = getSubBucketFor(key);
         writeToSubBucket(subBucketName, key, value);
     }
 
-    private void loadFromDisk() {
+    private synchronized void loadFromDisk() {
         if (this.isVolatile) {
             return;
         }
@@ -253,7 +253,7 @@ public class Bucket {
         }
     }
 
-    private void saveToDisk() {
+    private synchronized void saveToDisk() {
         if (this.isVolatile) {
             return;
         }
@@ -261,7 +261,7 @@ public class Bucket {
         writeData();
     }
 
-    private void writeConfig() {
+    private synchronized void writeConfig() {
         try (FileWriter writer = new FileWriter(getBasePath() + this.name + ".config")) {
             writer.write(this.maxKeys + System.lineSeparator());
             writer.write(this.keyHashSubstringLength + System.lineSeparator());
@@ -272,7 +272,7 @@ public class Bucket {
         }
     }
 
-    private void writeData() {
+    private synchronized void writeData() {
         try {
             FileOutputStream fos = new FileOutputStream(getBasePath() + this.name + ".bkt");
             ObjectOutputStream oos = new ObjectOutputStream(fos);
