@@ -23,6 +23,8 @@ public class BucketService {
         this.knownBuckets = ConcurrentHashMap.newKeySet();
         this.volatileBuckets = ConcurrentHashMap.newKeySet();
         loadBucketsFromDisk();
+
+        Runtime.getRuntime().addShutdownHook(new Thread(this::flushDirtyBuckets, "thot-bucket-flush-on-shutdown"));
     }
 
     public static BucketService getInstance() {
@@ -118,10 +120,20 @@ public class BucketService {
         for (String name : this.lastAccessed.keySet()) {
             final Date lastAccessed = this.lastAccessed.get(name);
             if (lastAccessed != null && now.getTime() - lastAccessed.getTime() > 3_600_000 /* 1 h */ && !this.volatileBuckets.contains(name)) {
+                final Bucket bucket = this.buckets.get(name);
+                if (bucket != null) {
+                    bucket.flushIfDirty();
+                }
                 this.buckets.remove(name);
                 this.lastAccessed.remove(name);
                 LOGGER.debug("Evicted bucket '" + name + "'");
             }
+        }
+    }
+
+    public void flushDirtyBuckets() {
+        for (Bucket bucket : this.buckets.values()) {
+            bucket.flushIfDirty();
         }
     }
 

@@ -19,6 +19,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class Thot implements DobbyEntryPoint {
     private static final Logger LOGGER = new Logger(Thot.class);
     private static String basePath = "buckets/";
+    private static final int BUCKET_FLUSH_INTERVAL_MS = 500;
 
     public static String getBasePath() {
         return basePath;
@@ -95,6 +96,7 @@ public class Thot implements DobbyEntryPoint {
                 newBucket.delete("THOT_MIGRATION_TMP_KEY");
             }
 
+            newBucket.flushIfDirty();
             oldService.delete(bucketName);
         });
 
@@ -143,7 +145,7 @@ public class Thot implements DobbyEntryPoint {
         }
     }
 
-    private void createBucketDirectoryIfNeeded() {
+    public static void createBucketDirectoryIfNeeded() {
         createDirectoryIfNotExists(basePath);
     }
 
@@ -151,7 +153,7 @@ public class Thot implements DobbyEntryPoint {
         createDirectoryIfNotExists(basePath + "backup/");
     }
 
-    private void createDirectoryIfNotExists(String path) {
+    public static void createDirectoryIfNotExists(String path) {
         final File file = new java.io.File(path);
         if (!file.exists()) {
             final boolean didCreate = file.mkdir();
@@ -169,5 +171,8 @@ public class Thot implements DobbyEntryPoint {
         Config.getInstance().setBoolean("dobby.scheduler.disabled", false);
         LOGGER.info("adding task to evict buckets every 10 minutes...");
         SchedulerService.getInstance().addRepeating(() -> thot.buckets.v2.service.BucketService.getInstance().evictBuckets(), 10, TimeUnit.MINUTES);
+
+        LOGGER.info("adding task to flush dirty buckets to disk every " + BUCKET_FLUSH_INTERVAL_MS + "ms...");
+        SchedulerService.getInstance().addRepeating(() -> thot.buckets.v2.service.BucketService.getInstance().flushDirtyBuckets(), BUCKET_FLUSH_INTERVAL_MS, TimeUnit.MILLISECONDS);
     }
 }

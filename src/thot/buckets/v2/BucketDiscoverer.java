@@ -40,6 +40,7 @@ public class BucketDiscoverer extends Classloader<Object> {
 
                 bucket.write("test", "test_value");
                 bucket.delete("test");
+                bucket.flushIfDirty();
             }
         }
     }

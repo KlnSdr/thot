@@ -11,6 +11,8 @@ import java.util.Collections;
 import java.util.HexFormat;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.regex.Pattern;
 
 import static thot.Thot.getBasePath;
 
@@ -22,7 +24,9 @@ public class Bucket {
     private int keyHashSubstringLength;
     private final ConcurrentHashMap<String, Serializable> data;
     private final ConcurrentHashMap<String, String> subBuckets;
-    private volatile boolean isLeaf = true;
+    private boolean isLeaf = true;
+    private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    private volatile boolean dirty = false;
 
     public Bucket(String name, int maxKeys, int keyHashSubstringLength, boolean isVolatile) {
         this.data = new ConcurrentHashMap<>();
@@ -46,57 +50,110 @@ public class Bucket {
         this(name, 200);
     }
 
-    public synchronized void write(String key, Serializable value) {
-        LOGGER.debug("Writing to bucket '" + this.name + "' with key '" + key + "'");
-        if (this.isLeaf) {
-            writeLeaf(key, value);
-        } else {
-            writeToSubBucket(key, value);
-        }
-    }
-
-    public synchronized Serializable read(String key) {
-        LOGGER.debug("Reading from bucket '" + this.name + "' with key '" + key + "'");
-
-        if (this.isLeaf) {
-            return this.data.get(key);
-        } else {
-            return readFromSubBucket(key);
-        }
-    }
-
-    public synchronized Serializable[] readPattern(String pattern) {
-        LOGGER.debug("Reading from bucket '" + this.name + "' with pattern '" + pattern + "'");
-        if (this.isLeaf) {
-            return this.data.entrySet().stream().filter(entry -> entry.getKey().matches(pattern)).map(Map.Entry::getValue).toArray(Serializable[]::new);
-        } else {
-            return readPatternFromSubBucket(pattern);
-        }
-    }
-
-    public synchronized void delete(String key) {
-        LOGGER.debug("Deleting from bucket '" + this.name + "' with key '" + key + "'");
-        if (this.isLeaf) {
-            Serializable oldValue = this.data.remove(key);
-            if (oldValue != null) {
-                saveToDisk();
+    public void write(String key, Serializable value) {
+        lock.writeLock().lock();
+        try {
+            LOGGER.debug("Writing to bucket '" + this.name + "' with key '" + key + "'");
+            if (this.isLeaf) {
+                writeLeaf(key, value);
+            } else {
+                writeToSubBucket(key, value);
             }
-        } else {
-            deleteFromSubBucket(key);
+        } finally {
+            lock.writeLock().unlock();
         }
     }
 
-    public synchronized String[] getKeys() {
-        if (this.isLeaf) {
-            return this.data.keySet().toArray(new String[0]);
-        } else {
-            return getKeysFromSubBucket();
+    public Serializable read(String key) {
+        lock.readLock().lock();
+        try {
+            LOGGER.debug("Reading from bucket '" + this.name + "' with key '" + key + "'");
+            if (this.isLeaf) {
+                return this.data.get(key);
+            } else {
+                return readFromSubBucket(key);
+            }
+        } finally {
+            lock.readLock().unlock();
         }
     }
 
-    private String getSubBucketFor(String key) {
+    public Serializable[] readPattern(String pattern) {
+        return readPattern(Pattern.compile(pattern));
+    }
+
+    private Serializable[] readPattern(Pattern compiledPattern) {
+        lock.readLock().lock();
+        try {
+            LOGGER.debug("Reading from bucket '" + this.name + "' with pattern '" + compiledPattern.pattern() + "'");
+            if (this.isLeaf) {
+                return this.data.entrySet().stream()
+                        .filter(entry -> compiledPattern.matcher(entry.getKey()).matches())
+                        .map(Map.Entry::getValue)
+                        .toArray(Serializable[]::new);
+            } else {
+                return readPatternFromSubBucket(compiledPattern);
+            }
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    public void delete(String key) {
+        lock.writeLock().lock();
+        try {
+            LOGGER.debug("Deleting from bucket '" + this.name + "' with key '" + key + "'");
+            if (this.isLeaf) {
+                Serializable oldValue = this.data.remove(key);
+                if (oldValue != null) {
+                    markDirty();
+                }
+            } else {
+                deleteFromSubBucket(key);
+            }
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    public String[] getKeys() {
+        lock.readLock().lock();
+        try {
+            if (this.isLeaf) {
+                return this.data.keySet().toArray(new String[0]);
+            } else {
+                return getKeysFromSubBucket();
+            }
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    public void flushIfDirty() {
+        if (!this.dirty) {
+            return;
+        }
+        lock.writeLock().lock();
+        try {
+            if (this.dirty) {
+                persistToDisk();
+                this.dirty = false;
+            }
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    private void markDirty() {
+        if (this.isVolatile) {
+            return;
+        }
+        this.dirty = true;
+    }
+
+    private String getSubBucketForWrite(String key) {
         if (this.isLeaf) {
-            LOGGER.warn("getSubBucketFor called on leaf bucket");
+            LOGGER.warn("getSubBucketForWrite called on leaf bucket");
             return null;
         }
 
@@ -105,20 +162,14 @@ public class Bucket {
             return null;
         }
 
-        return getSubBucketForHash(keyHash.substring(0, this.keyHashSubstringLength));
+        return getOrCreateSubBucketForHash(keyHash.substring(0, this.keyHashSubstringLength));
     }
 
-    private String getSubBucketForHash(String keyHash) {
-        if (this.isLeaf) {
-            LOGGER.warn("getSubBucketForHash called on leaf bucket");
-            return null;
-        }
-
+    private String getOrCreateSubBucketForHash(String keyHash) {
         String bucketName = this.subBuckets.get(keyHash);
         if (bucketName == null) {
             LOGGER.info("No sub-bucket found for key hash '" + keyHash + "', creating new sub-bucket");
-            final int lastDash =
-                    this.name.lastIndexOf('-');
+            final int lastDash = this.name.lastIndexOf('-');
             if (lastDash != -1) {
                 bucketName = this.name.substring(0, lastDash) + "-" + keyHash;
             } else {
@@ -126,8 +177,23 @@ public class Bucket {
             }
             this.subBuckets.put(keyHash, bucketName);
             BucketService.getInstance().create(bucketName, maxKeys, keyHashSubstringLength + 1, isVolatile);
+            markDirty();
         }
         return bucketName;
+    }
+
+    private String getExistingSubBucketFor(String key) {
+        if (this.isLeaf) {
+            LOGGER.warn("getExistingSubBucketFor called on leaf bucket");
+            return null;
+        }
+
+        final String keyHash = calculateKeyHash(key);
+        if (keyHash == null) {
+            return null;
+        }
+
+        return this.subBuckets.get(keyHash.substring(0, this.keyHashSubstringLength));
     }
 
     private String calculateKeyHash(String key) {
@@ -153,8 +219,8 @@ public class Bucket {
         return keys.toArray(new String[0]);
     }
 
-    private synchronized void deleteFromSubBucket(String key) {
-        final String subBucketName = getSubBucketFor(key);
+    private void deleteFromSubBucket(String key) {
+        final String subBucketName = getExistingSubBucketFor(key);
         if (subBucketName != null) {
             final Bucket subBucket = BucketService.getInstance().find(subBucketName);
             if (subBucket != null) {
@@ -163,19 +229,19 @@ public class Bucket {
         }
     }
 
-    private Serializable[] readPatternFromSubBucket(String pattern) {
+    private Serializable[] readPatternFromSubBucket(Pattern compiledPattern) {
         final ArrayList<Serializable> values = new ArrayList<>();
         for (String subBucketName : this.subBuckets.values()) {
             final Bucket subBucket = BucketService.getInstance().find(subBucketName);
             if (subBucket != null) {
-                Collections.addAll(values, subBucket.readPattern(pattern));
+                Collections.addAll(values, subBucket.readPattern(compiledPattern));
             }
         }
         return values.toArray(new Serializable[0]);
     }
 
     private Serializable readFromSubBucket(String key) {
-        final String subBucketName = getSubBucketFor(key);
+        final String subBucketName = getExistingSubBucketFor(key);
         if (subBucketName != null) {
             final Bucket subBucket = BucketService.getInstance().find(subBucketName);
             if (subBucket != null) {
@@ -185,39 +251,39 @@ public class Bucket {
         return null;
     }
 
-    private synchronized void writeLeaf(String key, Serializable value) {
+    private void writeLeaf(String key, Serializable value) {
         this.data.put(key, value);
 
         if (this.data.size() > this.maxKeys) {
             splitBucket();
         }
-        saveToDisk();
+        markDirty();
     }
 
-    private synchronized void splitBucket() {
+    private void splitBucket() {
         final ConcurrentHashMap<String, Serializable> newData = new ConcurrentHashMap<>(this.data);
         this.data.clear();
         this.isLeaf = false;
 
         for (Map.Entry<String, Serializable> entry : newData.entrySet()) {
-            final String subBucketName = getSubBucketFor(entry.getKey());
+            final String subBucketName = getSubBucketForWrite(entry.getKey());
             writeToSubBucket(subBucketName, entry.getKey(), entry.getValue());
         }
     }
 
-    private synchronized void writeToSubBucket(String bucketName, String key, Serializable value) {
+    private void writeToSubBucket(String bucketName, String key, Serializable value) {
         final Bucket subBucket = BucketService.getInstance().find(bucketName);
         if (subBucket != null) {
             subBucket.write(key, value);
         }
     }
 
-    private synchronized void writeToSubBucket(String key, Serializable value) {
-        final String subBucketName = getSubBucketFor(key);
+    private void writeToSubBucket(String key, Serializable value) {
+        final String subBucketName = getSubBucketForWrite(key);
         writeToSubBucket(subBucketName, key, value);
     }
 
-    private synchronized void loadFromDisk() {
+    private void loadFromDisk() {
         if (this.isVolatile) {
             return;
         }
@@ -237,31 +303,29 @@ public class Bucket {
             LOGGER.warn("Using default values for bucket '" + this.name + "'");
         }
 
-        try {
-            FileInputStream fis = new FileInputStream(getBasePath() + this.name + ".bkt");
-            ObjectInputStream ois = new ObjectInputStream(fis);
+        try (FileInputStream fis = new FileInputStream(getBasePath() + this.name + ".bkt");
+             ObjectInputStream ois = new ObjectInputStream(fis)) {
             if (this.isLeaf) {
                 this.data.putAll((ConcurrentHashMap<String, Serializable>) ois.readObject());
             } else {
                 this.subBuckets.putAll((ConcurrentHashMap<String, String>) ois.readObject());
             }
-            ois.close();
-            fis.close();
         } catch (IOException | ClassNotFoundException e) {
             LOGGER.error("Failed to load bucket '" + this.name + "' from disk");
             LOGGER.trace(e);
         }
     }
 
-    private synchronized void saveToDisk() {
+    private void persistToDisk() {
         if (this.isVolatile) {
             return;
         }
+        LOGGER.info("Flushing bucket '" + this.name + "' to disk");
         writeConfig();
         writeData();
     }
 
-    private synchronized void writeConfig() {
+    private void writeConfig() {
         try (FileWriter writer = new FileWriter(getBasePath() + this.name + ".config")) {
             writer.write(this.maxKeys + System.lineSeparator());
             writer.write(this.keyHashSubstringLength + System.lineSeparator());
@@ -272,17 +336,14 @@ public class Bucket {
         }
     }
 
-    private synchronized void writeData() {
-        try {
-            FileOutputStream fos = new FileOutputStream(getBasePath() + this.name + ".bkt");
-            ObjectOutputStream oos = new ObjectOutputStream(fos);
+    private void writeData() {
+        try (FileOutputStream fos = new FileOutputStream(getBasePath() + this.name + ".bkt");
+             ObjectOutputStream oos = new ObjectOutputStream(new BufferedOutputStream(fos))) {
             if (this.isLeaf) {
                 oos.writeObject(this.data);
             } else {
                 oos.writeObject(this.subBuckets);
             }
-            oos.close();
-            fos.close();
         } catch (IOException e) {
             LOGGER.error("Failed to save bucket '" + this.name + "' to disk");
             LOGGER.trace(e);
